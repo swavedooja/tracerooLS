@@ -6,23 +6,24 @@ import {
 } from '@mui/material';
 import { CloudUpload, Download, Storage, AddCircleOutline, CheckCircle, Error as ErrorIcon } from '@mui/icons-material';
 import { PackagingAPI } from '../../services/APIService';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 export default function MaterialInventory() {
+    const navigate = useNavigate();
     const { hierarchyId } = useParams();
     const [mode, setMode] = useState('erp'); // 'erp' or 'manual'
     const [levels, setLevels] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedLevel, setSelectedLevel] = useState(null);
     const [uploadedData, setUploadedData] = useState({}); // { levelId: { headers: [], rows: [] } }
+    const [hierarchies, setHierarchies] = useState([]);
 
     useEffect(() => {
-        // Load levels if hierarchyId is available, otherwise valid logic requires knowing the context
-        // For now, assuming this page might be accessed via a hierarchy context or show all.
-        // If accessed directly, we might need a hierarchy selector. 
-        // Based on previous PrintStation logic, it uses hierarchyId.
         if (hierarchyId) {
             loadLevels();
+        } else {
+            // Load hierarchies for selection
+            loadHierarchies();
         }
 
         // Load existing data from LocalStorage
@@ -31,6 +32,15 @@ export default function MaterialInventory() {
             setUploadedData(JSON.parse(savedData));
         }
     }, [hierarchyId]);
+
+    const loadHierarchies = async () => {
+        try {
+            const data = await PackagingAPI.getHierarchies();
+            setHierarchies(data);
+        } catch (e) {
+            console.error("Failed to load hierarchies", e);
+        }
+    };
 
     const loadLevels = async () => {
         setLoading(true);
@@ -137,7 +147,36 @@ export default function MaterialInventory() {
                 </Box>
             </Box>
 
-            {!hierarchyId && (
+            {mode === 'manual' && !hierarchyId && (
+                <Paper sx={{ p: 3, maxWidth: 600, mx: 'auto', textAlign: 'center' }}>
+                    <Typography variant="h6" gutterBottom>Select Packaging Hierarchy</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Please select a packaging hierarchy to manage its inventory data manually.
+                    </Typography>
+
+                    {hierarchies.length > 0 ? (
+                        <Box sx={{ display: 'grid', gap: 2 }}>
+                            {hierarchies.map(h => (
+                                <Button
+                                    key={h.id}
+                                    variant="outlined"
+                                    onClick={() => navigate(`/label-management/material-inventory/${h.id}`)}
+                                    sx={{ justifyContent: 'flex-start', p: 2 }}
+                                >
+                                    <Box sx={{ textAlign: 'left' }}>
+                                        <Typography variant="subtitle1" fontWeight="bold">{h.name}</Typography>
+                                        <Typography variant="caption" color="text.secondary">{h.description || 'No description'}</Typography>
+                                    </Box>
+                                </Button>
+                            ))}
+                        </Box>
+                    ) : (
+                        <Alert severity="info">No hierarchies found. Please create one in Label Management first.</Alert>
+                    )}
+                </Paper>
+            )}
+
+            {!hierarchyId && mode !== 'manual' && (
                 <Alert severity="warning">Please select a hierarchy to manage inventory.</Alert>
             )}
 
@@ -155,6 +194,7 @@ export default function MaterialInventory() {
 
             {mode === 'manual' && hierarchyId && (
                 <Box>
+                    <Button onClick={() => navigate('/label-management/material-inventory')} sx={{ mb: 2 }}>Change Hierarchy</Button>
                     <Tabs
                         value={selectedLevel || false}
                         onChange={(_, val) => setSelectedLevel(val)}

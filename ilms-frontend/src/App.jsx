@@ -35,6 +35,7 @@ import ShippingLabelManagement from './components/LabelManagement/ShippingLabelM
 import MaterialInventory from './components/LabelManagement/MaterialInventory'; // Add import
 import PackingDashboard from './components/Packing/PackingDashboard';
 import AggregationStation from './components/Packing/AggregationStation';
+import PrintStation from './components/LabelManagement/Print/PrintStation';
 
 import Registration from './components/Inventory/Registration';
 import SerialGeneration from './components/Inventory/SerialGeneration';
