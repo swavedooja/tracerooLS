@@ -184,19 +184,40 @@ export default function TradeItemLabelManagement() {
                             {levels.length > 0 && (
                                 <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
                                     <Typography variant="subtitle2" sx={{ mb: 2 }}>Packaging Hierarchy Visualization</Typography>
-                                    <Box sx={{ display: 'flex', alignItems: 'center', overflowX: 'auto', pb: 1 }}>
-                                        {[...levels].sort((a, b) => a.level_order - b.level_order).map((l, index) => (
-                                            <React.Fragment key={`graphical-${l.id}`}>
-                                                <Paper elevation={2} sx={{ p: 1.5, minWidth: 120, textAlign: 'center', bgcolor: 'primary.light', color: 'primary.contrastText' }}>
-                                                    <Typography variant="caption" display="block" sx={{ opacity: 0.8 }}>Level {l.level_order}</Typography>
-                                                    <Typography variant="body1" fontWeight="bold">{l.level_name.split(' (')[0]}</Typography>
-                                                    {l.capacity > 1 && <Typography variant="caption" display="block">Capacity: {l.capacity}</Typography>}
+                                    <Box sx={{ display: 'flex', justifyContent: 'center', overflowX: 'auto', pb: 1, pt: 1 }}>
+                                        {[...levels].sort((a, b) => a.level_order - b.level_order).reduce((innerContent, level, idx, arr) => {
+                                            const depthIndex = arr.length - 1 - idx;
+                                            const bgColors = ['#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#42a5f5', '#2196f3', '#1e88e5'];
+                                            return (
+                                                <Paper elevation={3} sx={{ 
+                                                    p: 2, 
+                                                    m: 1, 
+                                                    bgcolor: bgColors[depthIndex % bgColors.length], 
+                                                    border: '2px dashed #1565c0', 
+                                                    borderRadius: 2,
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'center',
+                                                    width: innerContent ? 'calc(100% - 16px)' : 'auto',
+                                                    minWidth: 180,
+                                                    transition: 'transform 0.2s',
+                                                    '&:hover': { transform: 'scale(1.02)' }
+                                                }}>
+                                                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                                        <Typography variant="caption" fontWeight="bold" color="primary.dark">Level {level.level_order}</Typography>
+                                                        {level.capacity > 1 && (
+                                                            <Box sx={{ bgcolor: 'rgba(255,255,255,0.7)', px: 1, py: 0.5, borderRadius: 1 }}>
+                                                                <Typography variant="caption" fontWeight="bold" color="primary.dark">Cap: {level.capacity}</Typography>
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                    <Typography variant="body1" fontWeight="bold" color="primary.dark" sx={{ mb: innerContent ? 3 : 1, textAlign: 'center' }}>
+                                                        {level.level_name.split(' (')[0]}
+                                                    </Typography>
+                                                    {innerContent}
                                                 </Paper>
-                                                {index < levels.length - 1 && (
-                                                    <Box sx={{ mx: 2, color: 'text.secondary', fontWeight: 'bold' }}>➔</Box>
-                                                )}
-                                            </React.Fragment>
-                                        ))}
+                                            )
+                                        }, null)}
                                     </Box>
                                 </Box>
                             )}
