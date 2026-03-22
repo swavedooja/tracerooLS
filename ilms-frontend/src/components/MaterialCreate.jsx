@@ -29,13 +29,13 @@ import { useNavigate } from 'react-router-dom';
 import { MaterialsAPI } from '../services/APIService';
 import MaterialDetailCard from './MaterialDetailCard';
 
-const TYPES = ['Raw Material', 'Finished Goods', 'Scrap'];
-const STATES = ['Solid', 'Liquid', 'Dust'];
-const CLASSES = ['Packed FG', 'Unpacked FG', 'Intermediate'];
-const GROUPS = ['Latitude Laptops', '100 ML Shampoo Bottles', 'Default Group'];
+const TYPES = ['Finished Goods', 'Raw Material', 'Packaging Material'];
+const STATES = ['Liquid', 'Solid', 'Gel', 'Powder'];
+const CLASSES = ['Bottles', 'Tubes', 'Jars', 'Cartons'];
+const GROUPS = ['Shampoo', 'Fairness Cream', 'Body Wash', 'Hand Sanitizer'];
 const STORAGE_TYPES = ['Ambient', 'Cool Storage', 'Cold Storage'];
 const PROCUREMENT_TYPES = ['Make To Stock', 'Make To Order', 'Purchase'];
-const UOMS = ['EA', 'KG', 'LT', 'TON'];
+const UOMS = ['EA', 'KG', 'LT', 'TON', 'ML', 'GM'];
 const STEPS = ['General', 'Dimensions & Weight', 'Storage & Handling', 'Identifiers', 'Images', 'Flags', 'Review & Submit'];
 
 export default function MaterialCreate() {
@@ -55,7 +55,10 @@ export default function MaterialCreate() {
     materialState: '',
     baseUOM: '',
     netWeightKg: '',
-    dimensionsMM: '',
+    lengthMM: '',
+    widthMM: '',
+    heightMM: '',
+    dimensionUom: 'MM',
     shelfLifeDays: '',
     materialEANupc: '',
     upc: '',
@@ -142,9 +145,12 @@ export default function MaterialCreate() {
       materialGroup: GROUPS[0],
       materialState: STATES[0],
       baseUOM: 'EA',
-      netWeightKg: 5,
-      dimensionsMM: '10x10x10',
-      shelfLifeDays: 365,
+      netWeightKg: 0.5,
+      lengthMM: 50,
+      widthMM: 50,
+      heightMM: 150,
+      dimensionUom: 'MM',
+      shelfLifeDays: 730,
       materialEANupc: `EAN-${unique}`,
       upc: `UPC-${unique}`,
       storageType: STORAGE_TYPES[0],
@@ -210,40 +216,29 @@ export default function MaterialCreate() {
     }
     setSaving(true);
     try {
-      // Parse dimensions string "10x10x10" -> length, width, height
-      let length = null, width = null, height = null;
-      if (form.dimensionsMM) {
-        const parts = form.dimensionsMM.toLowerCase().split('x');
-        if (parts.length === 3) {
-          length = Number(parts[0]);
-          width = Number(parts[1]);
-          height = Number(parts[2]);
-        }
-      }
-
       const payload = {
-        code: form.materialCode, // Mapped from materialCode
-        name: form.materialName, // Mapped from materialName
+        code: form.materialCode,
+        name: form.materialName,
         description: form.description,
         type: form.type,
-        category: form.materialGroup, // Mapping Group to Category
-        baseUom: form.baseUOM, // Mapped from baseUOM to baseUom
+        category: form.materialGroup,
+        baseUom: form.baseUOM,
 
         isBatchManaged: form.isBatchManaged,
-        isSerialManaged: form.isSerialized, // Mapped from isSerialized
+        isSerialManaged: form.isSerialized,
 
         shelfLifeDays: form.shelfLifeDays ? Number(form.shelfLifeDays) : null,
-        minStock: 0, // Default
-        maxStock: 0, // Default
+        minStock: 0,
+        maxStock: 0,
 
-        grossWeight: form.tradeWeightKg ? Number(form.tradeWeightKg) : null, // Assuming trade weight is gross
+        grossWeight: form.tradeWeightKg ? Number(form.tradeWeightKg) : null,
         netWeight: form.netWeightKg ? Number(form.netWeightKg) : null,
-        weightUom: 'KG', // specific to form field netWeightKg
+        weightUom: 'KG', // Form handles weight in KG
 
-        length: length,
-        width: width,
-        height: height,
-        dimensionUom: 'MM', // specific to form field dimensionsMM
+        length: form.lengthMM ? Number(form.lengthMM) : null,
+        width: form.widthMM ? Number(form.widthMM) : null,
+        height: form.heightMM ? Number(form.heightMM) : null,
+        dimensionUom: form.dimensionUom || 'MM',
 
         isHazmat: form.handlingParameter.hazardousClass && form.handlingParameter.hazardousClass !== 'None',
         hazmatClass: form.handlingParameter.hazardousClass,
@@ -298,11 +293,21 @@ export default function MaterialCreate() {
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Dimensions & Weight</Typography>
           <Grid container spacing={2}>
-            <Grid item xs={4}><TextField select label="Base UOM" required fullWidth size="small" value={form.baseUOM} onChange={onChange('baseUOM')}>{UOMS.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
-            <Grid item xs={4}><TextField type="number" label="Net Weight (kg)" fullWidth size="small" value={form.netWeightKg} onChange={onChange('netWeightKg')} /></Grid>
-            <Grid item xs={4}><TextField label="Dimensions (LxWxH)" fullWidth size="small" value={form.dimensionsMM} onChange={onChange('dimensionsMM')} /></Grid>
+            <Grid item xs={3}><TextField select label="Base UOM" required fullWidth size="small" value={form.baseUOM} onChange={onChange('baseUOM')}>{UOMS.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
+            <Grid item xs={3}><TextField type="number" label="Net Wgt (kg)" fullWidth size="small" value={form.netWeightKg} onChange={onChange('netWeightKg')} /></Grid>
+            <Grid item xs={6} />
+            <Grid item xs={3}><TextField type="number" label="Length" fullWidth size="small" value={form.lengthMM} onChange={onChange('lengthMM')} /></Grid>
+            <Grid item xs={3}><TextField type="number" label="Width" fullWidth size="small" value={form.widthMM} onChange={onChange('widthMM')} /></Grid>
+            <Grid item xs={3}><TextField type="number" label="Height" fullWidth size="small" value={form.heightMM} onChange={onChange('heightMM')} /></Grid>
+            <Grid item xs={3}>
+               <TextField select label="Dim UOM" fullWidth size="small" value={form.dimensionUom} onChange={onChange('dimensionUom')}>
+                   <MenuItem value="MM">MM</MenuItem>
+                   <MenuItem value="CM">CM</MenuItem>
+                   <MenuItem value="IN">IN</MenuItem>
+               </TextField>
+            </Grid>
             <Grid item xs={4}><TextField select label="Trade UOM" fullWidth size="small" value={form.tradeUOM} onChange={onChange('tradeUOM')}>{UOMS.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
-            <Grid item xs={4}><TextField type="number" label="Trade Weight (kg)" fullWidth size="small" value={form.tradeWeightKg} onChange={onChange('tradeWeightKg')} /></Grid>
+            <Grid item xs={4}><TextField type="number" label="Trade Wgt (kg)" fullWidth size="small" value={form.tradeWeightKg} onChange={onChange('tradeWeightKg')} /></Grid>
             <Grid item xs={4}><TextField label="Trade Dimensions" fullWidth size="small" value={form.tradeDimensionsMM} onChange={onChange('tradeDimensionsMM')} /></Grid>
           </Grid>
         </Paper>

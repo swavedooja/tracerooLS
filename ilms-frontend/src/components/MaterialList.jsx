@@ -47,9 +47,9 @@ export default function MaterialList() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Code</TableCell>
-              <TableCell>Name</TableCell>
+              <TableCell>SKU</TableCell>
               <TableCell>Type</TableCell>
+              <TableCell>Group</TableCell>
               <TableCell>UOM</TableCell>
               <TableCell>Track & Trace</TableCell>
               <TableCell>Weight</TableCell>
@@ -59,9 +59,12 @@ export default function MaterialList() {
           <TableBody>
             {filtered.map((row) => (
               <TableRow key={row.code}>
-                <TableCell fontWeight="bold">{row.code}</TableCell>
-                <TableCell>{row.name}</TableCell>
-                <TableCell><Chip label={row.type} size="small" /></TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight="bold">{row.code}</Typography>
+                  <Typography variant="caption" color="text.secondary">{row.name}</Typography>
+                </TableCell>
+                <TableCell><Chip label="FINISHED_GOODS" size="small" /></TableCell>
+                <TableCell>{row.category ? row.category.replace(/_/g, ' ') : 'General'}</TableCell>
                 <TableCell>{row.baseUom}</TableCell>
                 <TableCell>
                   {row.isBatchManaged && <Chip label="Batch" size="small" color="primary" variant="outlined" sx={{ mr: 0.5 }} />}
