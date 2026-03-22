@@ -362,6 +362,7 @@ export default function LabelDesigner({ propTemplateId, onSaveSuccess, onClose }
                             >
                                 <MenuItem value="A4">A4 (210 x 297 mm)</MenuItem>
                                 <MenuItem value="Letter">Letter (215.9 x 279.4 mm)</MenuItem>
+                                <MenuItem value="Continuous">Continuous Roll</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>
@@ -369,47 +370,67 @@ export default function LabelDesigner({ propTemplateId, onSaveSuccess, onClose }
                 <DialogContent sx={{ bgcolor: '#eee', display: 'flex', justifyContent: 'center', p: 4, overflow: 'auto' }}>
                     {/* Imposition Logic */}
                     {(() => {
-                        const paperDims = paperSize === 'A4' ? { w: 210, h: 297 } : { w: 215.9, h: 279.4 };
-                        // 3.78 px per mm approx for screen view, but let's just use CSS scale or relative sizing
+                        const isContinuous = paperSize === 'Continuous';
                         const pxPerMm = 3.78;
+                        const paperDims = paperSize === 'A4' ? { w: 210, h: 297 } : (paperSize === 'Letter' ? { w: 215.9, h: 279.4 } : { w: template.widthMm, h: template.heightMm * 5 + 20 });
                         const sheetW = paperDims.w * pxPerMm;
-                        const sheetH = paperDims.h * pxPerMm;
+                        const sheetH = isContinuous ? 'auto' : paperDims.h * pxPerMm;
                         const labelW = template.widthMm * pxPerMm;
                         const labelH = template.heightMm * pxPerMm;
 
-                        const cols = Math.floor(paperDims.w / template.widthMm);
-                        const rows = Math.floor(paperDims.h / template.heightMm);
-                        const totalLabels = cols * rows;
+                        const cols = isContinuous ? 1 : Math.floor(paperDims.w / template.widthMm);
+                        const rows = isContinuous ? 5 : Math.floor(paperDims.h / template.heightMm);
+                        const totalLabels = isContinuous ? 5 : cols * rows;
 
                         return (
                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                                 <Typography variant="body2">
-                                    Fits <b>{totalLabels}</b> labels ({cols} x {rows}) on {paperSize}.
+                                    {isContinuous ? `Showing 5 sample labels on continuous roll.` : `Fits ${totalLabels} labels (${cols} x ${rows}) on ${paperSize}.`}
                                 </Typography>
                                 <Box
                                     id="sheet-preview"
                                     sx={{
                                         width: sheetW,
                                         height: sheetH,
-                                        bgcolor: 'white',
-                                        boxShadow: 3,
-                                        display: 'grid',
-                                        gridTemplateColumns: `repeat(${cols}, ${labelW}px)`,
-                                        gridTemplateRows: `repeat(${rows}, ${labelH}px)`,
-                                        // gap: '1px', // Optional cutting lines
-                                        border: '1px solid #ccc'
+                                        bgcolor: isContinuous ? 'transparent' : 'white',
+                                        boxShadow: isContinuous ? 0 : 3,
+                                        display: isContinuous ? 'flex' : 'grid',
+                                        flexDirection: isContinuous ? 'column' : 'row',
+                                        gridTemplateColumns: isContinuous ? 'none' : `repeat(${cols}, ${labelW}px)`,
+                                        gridTemplateRows: isContinuous ? 'none' : `repeat(${rows}, ${labelH}px)`,
+                                        gap: isContinuous ? '20px' : '0px',
+                                        border: isContinuous ? 'none' : '1px solid #ccc'
                                     }}
                                 >
                                     {Array.from({ length: totalLabels }).map((_, i) => (
-                                        <Box key={i} sx={{ border: '1px dashed #eee', overflow: 'hidden' }}>
-                                            {/* Scaled down content if needed, but here exact size */}
-                                            <LabelPreview
-                                                width={labelW}
-                                                height={labelH}
-                                                elements={elements}
-                                                data={DUMMY_DATA}
-                                                scale={1} // Assuming LabelPreview handles scale or is purely px based
-                                            />
+                                        <Box key={i} sx={{ 
+                                            border: '1px dashed #eee', 
+                                            overflow: 'visible',
+                                            bgcolor: 'white',
+                                            boxShadow: isContinuous ? 1 : 0,
+                                            position: 'relative',
+                                            ...(isContinuous && i < totalLabels - 1 ? {
+                                                '&::after': {
+                                                    content: '""',
+                                                    position: 'absolute',
+                                                    bottom: '-11px',
+                                                    left: 0,
+                                                    right: 0,
+                                                    height: '1px',
+                                                    borderBottom: '2px dashed #bbb'
+                                                }
+                                            } : {})
+                                        }}>
+                                            <Box sx={{ overflow: 'hidden', width: '100%', height: '100%' }}>
+                                                {/* Scaled down content if needed, but here exact size */}
+                                                <LabelPreview
+                                                    width={labelW}
+                                                    height={labelH}
+                                                    elements={elements}
+                                                    data={DUMMY_DATA}
+                                                    scale={1} // Assuming LabelPreview handles scale or is purely px based
+                                                />
+                                            </Box>
                                         </Box>
                                     ))}
                                 </Box>

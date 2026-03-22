@@ -121,15 +121,16 @@ export default function PrintStation() {
         const data = uploadedData[levelId]?.rows || [];
         if (data.length === 0) return <Typography>No data available for this level.</Typography>;
 
-        const paperDims = paperSize === 'A4' ? { w: 210, h: 297 } : { w: 215.9, h: 279.4 };
+        const isContinuous = paperSize === 'Continuous';
+        const paperDims = paperSize === 'A4' ? { w: 210, h: 297 } : (paperSize === 'Letter' ? { w: 215.9, h: 279.4 } : { w: template.width || 100, h: template.height || 150 });
         const pxPerMm = 3.78;
         const labelW = (template.width || 100) * pxPerMm;
         const labelH = (template.height || 150) * pxPerMm;
-        const cols = Math.floor(paperDims.w / (template.width || 100));
-        const rows = Math.floor(paperDims.h / (template.height || 150));
-        const labelsPerSheet = cols * rows;
-        const totalLabels = calculatedCounts[levelId] || data.length; // Limit to calculated count
-        const totalSheets = Math.ceil(totalLabels / labelsPerSheet);
+        const cols = isContinuous ? 1 : Math.floor(paperDims.w / (template.width || 100));
+        const rows = isContinuous ? 1 : Math.floor(paperDims.h / (template.height || 150));
+        const labelsPerSheet = isContinuous ? 1 : cols * rows; 
+        const totalLabels = calculatedCounts[levelId] || data.length; 
+        const totalSheets = isContinuous ? totalLabels : Math.ceil(totalLabels / labelsPerSheet);
 
         // Slice data to match needed quantity
         const neededData = data.slice(0, totalLabels);
@@ -137,25 +138,32 @@ export default function PrintStation() {
         return (
             <Box>
                 <Typography variant="body2" sx={{ mb: 2 }}>
-                    <b>{totalLabels}</b> labels → <b>{totalSheets}</b> sheet(s) ({labelsPerSheet} per sheet on {paperSize})
+                    <b>{totalLabels}</b> labels → <b>{totalSheets}</b> {isContinuous ? 'labels (continuous)' : 'sheet(s)'} ({labelsPerSheet} per sheet on {paperSize})
                 </Typography>
-                {/* Render first sheet as preview */}
+                {/* Render first sheet as preview, or all for continuous */}
                 <Paper
                     id="print-area"
                     sx={{
-                        width: paperDims.w * pxPerMm,
-                        height: paperDims.h * pxPerMm,
-                        display: 'grid',
-                        gridTemplateColumns: `repeat(${cols}, ${labelW}px)`,
-                        gridTemplateRows: `repeat(${rows}, ${labelH}px)`,
-                        border: '1px solid #ccc',
-                        bgcolor: 'white',
-                        boxShadow: 2,
+                        width: isContinuous ? labelW : paperDims.w * pxPerMm,
+                        height: isContinuous ? 'auto' : paperDims.h * pxPerMm,
+                        display: isContinuous ? 'flex' : 'grid',
+                        flexDirection: isContinuous ? 'column' : 'row',
+                        gridTemplateColumns: isContinuous ? 'none' : `repeat(${cols}, ${labelW}px)`,
+                        gridTemplateRows: isContinuous ? 'none' : `repeat(${rows}, ${labelH}px)`,
+                        gap: isContinuous ? '10px' : '0px',
+                        bgcolor: isContinuous ? 'transparent' : 'white',
+                        border: isContinuous ? 'none' : '1px solid #ccc',
+                        boxShadow: isContinuous ? 0 : 2,
                         mx: 'auto'
                     }}
                 >
-                    {neededData.slice(0, labelsPerSheet).map((rowData, i) => (
-                        <Box key={i} sx={{ border: '1px dashed #eee', overflow: 'hidden' }}>
+                    {neededData.slice(0, isContinuous ? neededData.length : labelsPerSheet).map((rowData, i) => (
+                        <Box key={i} className="label-container" sx={{ 
+                            border: '1px dashed #eee', 
+                            overflow: 'hidden', 
+                            bgcolor: 'white', 
+                            boxShadow: isContinuous ? 1 : 0 
+                        }}>
                             <LabelPreview
                                 width={labelW}
                                 height={labelH}
@@ -189,11 +197,20 @@ export default function PrintStation() {
                             padding: 0;
                             border: none !important;
                             box-shadow: none !important;
+                            ${paperSize === 'Continuous' ? 'display: block !important;' : ''}
                         }
                         @page {
-                            size: ${paperSize} portrait;
-                            margin: 10mm;
+                            size: ${paperSize === 'Continuous' ? 'auto' : `${paperSize} portrait`};
+                            margin: ${paperSize === 'Continuous' ? '0mm' : '10mm'};
                         }
+                        ${paperSize === 'Continuous' ? `
+                        .label-container {
+                            page-break-after: always;
+                            margin: 0;
+                            padding: 0;
+                            border: none !important;
+                        }
+                        ` : ''}
                     }
                 `}
             </style>
@@ -359,6 +376,7 @@ export default function PrintStation() {
                             <Select value={paperSize} label="Paper Size" onChange={(e) => setPaperSize(e.target.value)}>
                                 <MenuItem value="A4">A4 (210 x 297 mm)</MenuItem>
                                 <MenuItem value="Letter">Letter (215.9 x 279.4 mm)</MenuItem>
+                                <MenuItem value="Continuous">Continuous Roll</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>
