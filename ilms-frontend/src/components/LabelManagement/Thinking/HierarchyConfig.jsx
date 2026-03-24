@@ -18,13 +18,46 @@ const FMCG_PACKAGING_DATA = [
     { name: '40ft Container', type: 'Container', dimensions: '12.0m x 2.35m x 2.39m', weight: 'Max 29,000kg' }
 ];
 
+const PRODUCT_HIERARCHY_DATA = {
+    "Shampoo": {
+        skus: [
+            { name: "Shampoo Bottle (200ml)", dimensions: "50mm x 50mm x 150mm", weight: "0.25kg", type: "Bottle" },
+            { name: "Shampoo Bottle (500ml)", dimensions: "70mm x 70mm x 220mm", weight: "0.6kg", type: "Bottle" },
+            { name: "Shampoo Sachet 50ml", dimensions: "50mm x 50mm x 5mm", weight: "0.05kg", type: "Sachet" }
+        ],
+        packagingTypes: ["Economy Packaging", "Global Packaging", "Standard Packaging"]
+    },
+    "Fairness Cream": {
+        skus: [
+            { name: "Fairness Cream Tube (50g)", dimensions: "30mm x 30mm x 120mm", weight: "0.06kg", type: "Tube" },
+            { name: "Fairness Cream Jar (100g)", dimensions: "60mm x 60mm x 50mm", weight: "0.15kg", type: "Jar" }
+        ],
+        packagingTypes: ["Premium Packaging", "Standard Packaging"]
+    },
+    "Soap": {
+        skus: [
+            { name: "Soap Bar 100g", dimensions: "80mm x 50mm x 25mm", weight: "0.1kg", type: "Bar" },
+            { name: "Soap Pack 3x100g", dimensions: "80mm x 150mm x 25mm", weight: "0.3kg", type: "Pack" }
+        ],
+        packagingTypes: ["Value Pack", "Premium Wrap"]
+    },
+    "Wine": {
+        skus: [
+            { name: "Wine Bottle 750ml", dimensions: "80mm x 80mm x 300mm", weight: "1.2kg", type: "Bottle" }
+        ],
+        packagingTypes: ["Wooden Crate", "Export Corrugated Box"]
+    }
+};
+
 export default function HierarchyConfig() {
     const navigate = useNavigate();
     const [hierarchies, setHierarchies] = useState([]);
     const [selectedHierarchy, setSelectedHierarchy] = useState(null);
     const [levels, setLevels] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
-    const [newHierarchyName, setNewHierarchyName] = useState('');
+    const [selectedProduct, setSelectedProduct] = useState('');
+    const [selectedSku, setSelectedSku] = useState('');
+    const [selectedPackagingType, setSelectedPackagingType] = useState('');
 
     // Level editing
     const [openLevelDialog, setOpenLevelDialog] = useState(false);
@@ -62,13 +95,29 @@ export default function HierarchyConfig() {
     };
 
     const createHierarchy = async () => {
-        if (!newHierarchyName.trim()) return;
+        if (!selectedProduct || !selectedSku || !selectedPackagingType) return;
+        const generatedName = `${selectedProduct} - ${selectedSku} - ${selectedPackagingType}`;
         try {
-            const data = await PackagingAPI.createHierarchy({ name: newHierarchyName });
+            const data = await PackagingAPI.createHierarchy({ name: generatedName });
+            
+            // Now automatically create the first level based on the selected SKU
+            await PackagingAPI.createLevel({
+                hierarchy_id: data.id,
+                level_name: selectedSku,
+                level_order: 1,
+                capacity: 1
+            });
+
             setHierarchies([...hierarchies, data]);
             setSelectedHierarchy(data);
+            
+            // Reload levels so the new auto-created level appears
+            loadLevels(data.id);
+            
             setOpenDialog(false);
-            setNewHierarchyName('');
+            setSelectedProduct('');
+            setSelectedSku('');
+            setSelectedPackagingType('');
         } catch (e) { console.error(e); }
     };
 
@@ -222,13 +271,81 @@ export default function HierarchyConfig() {
 
             {/* New Hierarchy Dialog */}
             <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                <DialogTitle>New Hierarchy</DialogTitle>
+                <DialogTitle>New Packaging Hierarchy</DialogTitle>
                 <DialogContent>
-                    <TextField autoFocus margin="dense" label="Name" fullWidth value={newHierarchyName} onChange={(e) => setNewHierarchyName(e.target.value)} />
+                    <TextField
+                        select
+                        autoFocus
+                        margin="dense"
+                        label="Product"
+                        fullWidth
+                        value={selectedProduct}
+                        onChange={(e) => {
+                            setSelectedProduct(e.target.value);
+                            setSelectedSku('');
+                            setSelectedPackagingType('');
+                        }}
+                        sx={{ mb: 2, mt: 1 }}
+                        SelectProps={{ native: true }}
+                    >
+                        <option value=""></option>
+                        {Object.keys(PRODUCT_HIERARCHY_DATA).map(prod => (
+                            <option key={prod} value={prod}>{prod}</option>
+                        ))}
+                    </TextField>
+
+                    {selectedProduct && (
+                        <>
+                            <TextField
+                                select
+                                margin="dense"
+                                label="SKU"
+                                fullWidth
+                                value={selectedSku}
+                                onChange={(e) => setSelectedSku(e.target.value)}
+                                sx={{ mb: 2 }}
+                                SelectProps={{ native: true }}
+                            >
+                                <option value=""></option>
+                                {PRODUCT_HIERARCHY_DATA[selectedProduct].skus.map(sku => (
+                                    <option key={sku.name} value={sku.name}>{sku.name}</option>
+                                ))}
+                            </TextField>
+
+                            {/* Show details for selected SKU */}
+                            {(() => {
+                                const activeSku = PRODUCT_HIERARCHY_DATA[selectedProduct].skus.find(s => s.name === selectedSku);
+                                if (!activeSku) return null;
+                                return (
+                                    <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2, border: '1px solid #e0e0e0' }}>
+                                        <Typography variant="body2" color="text.secondary"><strong>Type:</strong> {activeSku.type}</Typography>
+                                        <Typography variant="body2" color="text.secondary"><strong>Dimensions:</strong> {activeSku.dimensions}</Typography>
+                                        <Typography variant="body2" color="text.secondary"><strong>Weight:</strong> {activeSku.weight}</Typography>
+                                    </Box>
+                                );
+                            })()}
+
+                            <TextField
+                                select
+                                margin="dense"
+                                label="Packaging Type"
+                                fullWidth
+                                value={selectedPackagingType}
+                                onChange={(e) => setSelectedPackagingType(e.target.value)}
+                                sx={{ mb: 2 }}
+                                SelectProps={{ native: true }}
+                            >
+                                <option value=""></option>
+                                {PRODUCT_HIERARCHY_DATA[selectedProduct].packagingTypes.map(ptype => (
+                                    <option key={ptype} value={ptype}>{ptype}</option>
+                                ))}
+                            </TextField>
+                        </>
+                    )}
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button onClick={createHierarchy} variant="contained">Create</Button>
+                    <Button onClick={createHierarchy} variant="contained" disabled={!selectedProduct || !selectedSku || !selectedPackagingType}>Create</Button>
                 </DialogActions>
             </Dialog>
 
