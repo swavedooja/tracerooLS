@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Grid, Paper, TextField, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip } from '@mui/material';
-import { Add, Delete, Edit, Link as LinkIcon, Print } from '@mui/icons-material';
+import { Add, Delete, Edit, Link as LinkIcon, Print, LocalDrink, Inventory, Layers, LocalShipping, WineBar, Spa, ViewColumn } from '@mui/icons-material';
 import { PackagingAPI } from '../../services/APIService';
 import LabelDesigner from '../LabelDesigner/LabelDesigner';
 import { useNavigate } from 'react-router-dom';
+
+const getIconForType = (typeStr) => {
+    const t = typeStr?.toLowerCase() || '';
+    if (t.includes('bottle') || t.includes('sachet')) return <LocalDrink fontSize="small" />;
+    if (t.includes('wine')) return <WineBar fontSize="small" />;
+    if (t.includes('box') || t.includes('carton') || t.includes('case')) return <Inventory fontSize="small" />;
+    if (t.includes('pallet')) return <Layers fontSize="small" />;
+    if (t.includes('container')) return <LocalShipping fontSize="small" />;
+    if (t.includes('soap') || t.includes('cream')) return <Spa fontSize="small" />;
+    if (t.includes('shampoo') || t.includes('tube')) return <ViewColumn fontSize="small" />;
+    return <Inventory fontSize="small" />;
+};
 
 const FMCG_PACKAGING_DATA = [
     { name: 'Shampoo Bottle (200ml)', type: 'Bottle', dimensions: '50mm x 50mm x 150mm', weight: '0.25kg' },
@@ -339,15 +351,15 @@ export default function ShippingLabelManagement() {
                             value={levelForm.name}
                             onChange={(e) => setLevelForm({ ...levelForm, name: e.target.value })}
                             sx={{ mb: 2 }}
-                            SelectProps={{
-                                native: true,
-                            }}
                         >
-                            <option value=""></option>
+                            <MenuItem value="" disabled><em>Select Level</em></MenuItem>
                             {FMCG_PACKAGING_DATA.map((pkg) => (
-                                <option key={pkg.name} value={pkg.name}>
-                                    {pkg.name}
-                                </option>
+                                <MenuItem key={pkg.name} value={pkg.name}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        {getIconForType(pkg.type || pkg.name)}
+                                        {pkg.name}
+                                    </Box>
+                                </MenuItem>
                             ))}
                         </TextField>
 

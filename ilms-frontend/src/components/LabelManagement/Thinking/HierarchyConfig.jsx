@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, Grid, Paper, TextField, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip } from '@mui/material';
-import { Add, Delete, Edit, Link as LinkIcon, Print } from '@mui/icons-material';
+import { Add, Delete, Edit, Link as LinkIcon, Print, LocalDrink, Inventory, Layers, LocalShipping, WineBar, Spa, ViewColumn } from '@mui/icons-material';
 import { PackagingAPI } from '../../../services/APIService';
 import LabelDesigner from '../../LabelDesigner/LabelDesigner';
 import { useNavigate } from 'react-router-dom';
+
+const getIconForType = (typeStr) => {
+    const t = typeStr?.toLowerCase() || '';
+    if (t.includes('bottle') || t.includes('sachet')) return <LocalDrink fontSize="small" />;
+    if (t.includes('wine')) return <WineBar fontSize="small" />;
+    if (t.includes('box') || t.includes('carton') || t.includes('case')) return <Inventory fontSize="small" />;
+    if (t.includes('pallet')) return <Layers fontSize="small" />;
+    if (t.includes('container')) return <LocalShipping fontSize="small" />;
+    if (t.includes('soap') || t.includes('cream')) return <Spa fontSize="small" />;
+    if (t.includes('shampoo') || t.includes('tube')) return <ViewColumn fontSize="small" />;
+    return <Inventory fontSize="small" />;
+};
 
 const FMCG_PACKAGING_DATA = [
     { name: 'Shampoo Bottle (200ml)', type: 'Bottle', dimensions: '50mm x 50mm x 150mm', weight: '0.25kg' },
@@ -286,11 +298,15 @@ export default function HierarchyConfig() {
                             setSelectedPackagingType('');
                         }}
                         sx={{ mb: 2, mt: 1 }}
-                        SelectProps={{ native: true }}
                     >
-                        <option value=""></option>
+                        <MenuItem value="" disabled><em>Select Product</em></MenuItem>
                         {Object.keys(PRODUCT_HIERARCHY_DATA).map(prod => (
-                            <option key={prod} value={prod}>{prod}</option>
+                            <MenuItem key={prod} value={prod}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    {getIconForType(prod)}
+                                    {prod}
+                                </Box>
+                            </MenuItem>
                         ))}
                     </TextField>
 
@@ -304,11 +320,15 @@ export default function HierarchyConfig() {
                                 value={selectedSku}
                                 onChange={(e) => setSelectedSku(e.target.value)}
                                 sx={{ mb: 2 }}
-                                SelectProps={{ native: true }}
                             >
-                                <option value=""></option>
+                                <MenuItem value="" disabled><em>Select SKU</em></MenuItem>
                                 {PRODUCT_HIERARCHY_DATA[selectedProduct].skus.map(sku => (
-                                    <option key={sku.name} value={sku.name}>{sku.name}</option>
+                                    <MenuItem key={sku.name} value={sku.name}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {getIconForType(sku.type || sku.name)}
+                                            {sku.name}
+                                        </Box>
+                                    </MenuItem>
                                 ))}
                             </TextField>
 
@@ -333,11 +353,15 @@ export default function HierarchyConfig() {
                                 value={selectedPackagingType}
                                 onChange={(e) => setSelectedPackagingType(e.target.value)}
                                 sx={{ mb: 2 }}
-                                SelectProps={{ native: true }}
                             >
-                                <option value=""></option>
+                                <MenuItem value="" disabled><em>Select Packaging</em></MenuItem>
                                 {PRODUCT_HIERARCHY_DATA[selectedProduct].packagingTypes.map(ptype => (
-                                    <option key={ptype} value={ptype}>{ptype}</option>
+                                    <MenuItem key={ptype} value={ptype}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {getIconForType(ptype)}
+                                            {ptype}
+                                        </Box>
+                                    </MenuItem>
                                 ))}
                             </TextField>
                         </>
@@ -363,15 +387,15 @@ export default function HierarchyConfig() {
                             value={levelForm.name}
                             onChange={(e) => setLevelForm({ ...levelForm, name: e.target.value })}
                             sx={{ mb: 2 }}
-                            SelectProps={{
-                                native: true,
-                            }}
                         >
-                            <option value=""></option>
+                            <MenuItem value="" disabled><em>Select Level</em></MenuItem>
                             {FMCG_PACKAGING_DATA.map((pkg) => (
-                                <option key={pkg.name} value={pkg.name}>
-                                    {pkg.name}
-                                </option>
+                                <MenuItem key={pkg.name} value={pkg.name}>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        {getIconForType(pkg.type || pkg.name)}
+                                        {pkg.name}
+                                    </Box>
+                                </MenuItem>
                             ))}
                         </TextField>
 

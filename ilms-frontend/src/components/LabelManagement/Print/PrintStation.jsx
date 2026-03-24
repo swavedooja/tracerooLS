@@ -33,6 +33,14 @@ export default function PrintStation() {
     const [levels, setLevels] = useState([]);
     const [loading, setLoading] = useState(false);
 
+    // Standalone Selection
+    const [allHierarchies, setAllHierarchies] = useState([]);
+    const [selectedProduct, setSelectedProduct] = useState('');
+    const [tempHierarchyId, setTempHierarchyId] = useState('');
+    const [selectedHierarchyId, setSelectedHierarchyId] = useState(null);
+
+    const activeHierarchyId = hierarchyId || selectedHierarchyId;
+
     // Step 1: Quantity
     const [totalItems, setTotalItems] = useState('');
     const [calculatedCounts, setCalculatedCounts] = useState({}); // { levelId: count }
@@ -46,20 +54,38 @@ export default function PrintStation() {
     const [paperSize, setPaperSize] = useState('A4');
 
     useEffect(() => {
-        if (hierarchyId) {
-            loadLevels();
+        if (!hierarchyId) {
+            loadAllHierarchies();
+        }
+    }, [hierarchyId]);
+
+    const loadAllHierarchies = async () => {
+        setLoading(true);
+        try {
+            const data = await PackagingAPI.getHierarchies();
+            setAllHierarchies(data);
+        } catch (e) { console.error(e); }
+        setLoading(false);
+    };
+
+    const uniqueProducts = Array.from(new Set(allHierarchies.map(h => h.name.split(' - ')[0])));
+    const filteredHierarchies = allHierarchies.filter(h => h.name.startsWith(selectedProduct + ' -'));
+
+    useEffect(() => {
+        if (activeHierarchyId) {
+            loadLevels(activeHierarchyId);
             // Load data from shared source
-            const savedData = localStorage.getItem(`materialData_${hierarchyId}`);
+            const savedData = localStorage.getItem(`materialData_${activeHierarchyId}`);
             if (savedData) {
                 setUploadedData(JSON.parse(savedData));
             }
         }
-    }, [hierarchyId]);
+    }, [activeHierarchyId]);
 
-    const loadLevels = async () => {
+    const loadLevels = async (hid) => {
         setLoading(true);
         try {
-            const data = await PackagingAPI.getLevels(hierarchyId);
+            const data = await PackagingAPI.getLevels(hid);
             // Sort by level_order ascending (lowest = innermost = items)
             const sorted = data.sort((a, b) => a.level_order - b.level_order);
             setLevels(sorted);
@@ -217,15 +243,49 @@ export default function PrintStation() {
             <Button startIcon={<ArrowBack />} onClick={() => navigate('/labels')} sx={{ mb: 2 }}>Back</Button>
             <Typography variant="h5" fontWeight="bold" gutterBottom>Bulk Label Printing</Typography>
 
-            <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-                {steps.map((label) => (
-                    <Step key={label}><StepLabel>{label}</StepLabel></Step>
-                ))}
-            </Stepper>
-
             {loading && <LinearProgress sx={{ mb: 2 }} />}
 
-            {/* Step 1: Plan Quantities */}
+            {!activeHierarchyId ? (
+                <Paper sx={{ p: 4 }}>
+                    <Typography variant="h6" gutterBottom>Select Product & Hierarchy</Typography>
+                    <FormControl fullWidth sx={{ mb: 3 }}>
+                        <InputLabel>Product</InputLabel>
+                        <Select value={selectedProduct} label="Product" onChange={e => {
+                            setSelectedProduct(e.target.value);
+                            setTempHierarchyId('');
+                        }}>
+                            {uniqueProducts.map(p => <MenuItem key={p} value={p}>{p}</MenuItem>)}
+                        </Select>
+                    </FormControl>
+
+                    {selectedProduct && (
+                        <FormControl fullWidth sx={{ mb: 3 }}>
+                            <InputLabel>Hierarchy</InputLabel>
+                            <Select value={tempHierarchyId} label="Hierarchy" onChange={e => setTempHierarchyId(e.target.value)}>
+                                {filteredHierarchies.map(h => <MenuItem key={h.id} value={h.id}>{h.name}</MenuItem>)}
+                            </Select>
+                        </FormControl>
+                    )}
+
+                    <Box>
+                        <Button 
+                            variant="contained" 
+                            disabled={!tempHierarchyId}
+                            onClick={() => setSelectedHierarchyId(tempHierarchyId)}
+                        >
+                            Continue
+                        </Button>
+                    </Box>
+                </Paper>
+            ) : (
+                <>
+                <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
+                    {steps.map((label) => (
+                        <Step key={label}><StepLabel>{label}</StepLabel></Step>
+                    ))}
+                </Stepper>
+
+                {/* Step 1: Plan Quantities */}
             {activeStep === 0 && (
                 <Paper sx={{ p: 4 }}>
                     <Typography variant="h6" gutterBottom>How many items do you want to print?</Typography>
@@ -406,6 +466,8 @@ export default function PrintStation() {
                         </Button>
                     </Box>
                 </Paper>
+            )}
+            </>
             )}
         </Box>
     );

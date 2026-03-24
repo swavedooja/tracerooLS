@@ -35,6 +35,7 @@ const CLASSES = ['Bottles', 'Tubes', 'Jars', 'Cartons'];
 const GROUPS = ['Shampoo', 'Fairness Cream', 'Body Wash', 'Hand Sanitizer'];
 const STORAGE_TYPES = ['Ambient', 'Cool Storage', 'Cold Storage'];
 const PROCUREMENT_TYPES = ['Make To Stock', 'Make To Order', 'Purchase'];
+const VEHICLE_TYPES = ['Bulker', 'Tanker', 'Flatbed', 'Refrigerated Truck', 'Standard Container'];
 const UOMS = ['EA', 'KG', 'LT', 'TON', 'ML', 'GM'];
 const STEPS = ['General', 'Dimensions & Weight', 'Storage & Handling', 'Identifiers', 'Images', 'Flags', 'Review & Submit'];
 
@@ -55,6 +56,7 @@ export default function MaterialCreate() {
     materialState: '',
     baseUOM: '',
     netWeightKg: '',
+    netWeightUom: 'KG',
     lengthMM: '',
     widthMM: '',
     heightMM: '',
@@ -64,9 +66,14 @@ export default function MaterialCreate() {
     upc: '',
     storageType: '',
     procurementType: '',
+    vehicleType: '',
     tradeUOM: '',
     tradeWeightKg: '',
-    tradeDimensionsMM: '',
+    tradeWeightUom: 'KG',
+    tradeLengthMM: '',
+    tradeWidthMM: '',
+    tradeHeightMM: '',
+    tradeDimensionUom: 'MM',
     isPackaged: false,
     isFragile: false,
     isHighValue: false,
@@ -146,6 +153,7 @@ export default function MaterialCreate() {
       materialState: STATES[0],
       baseUOM: 'EA',
       netWeightKg: 0.5,
+      netWeightUom: 'KG',
       lengthMM: 50,
       widthMM: 50,
       heightMM: 150,
@@ -155,9 +163,14 @@ export default function MaterialCreate() {
       upc: `UPC-${unique}`,
       storageType: STORAGE_TYPES[0],
       procurementType: PROCUREMENT_TYPES[0],
+      vehicleType: VEHICLE_TYPES[0],
       tradeUOM: 'EA',
       tradeWeightKg: 6,
-      tradeDimensionsMM: '12x12x12',
+      tradeWeightUom: 'KG',
+      tradeLengthMM: 180,
+      tradeWidthMM: 180,
+      tradeHeightMM: 150,
+      tradeDimensionUom: 'MM',
       isPackaged: true,
       isFragile: false,
       isHighValue: false,
@@ -233,7 +246,7 @@ export default function MaterialCreate() {
 
         grossWeight: form.tradeWeightKg ? Number(form.tradeWeightKg) : null,
         netWeight: form.netWeightKg ? Number(form.netWeightKg) : null,
-        weightUom: 'KG', // Form handles weight in KG
+        weightUom: form.netWeightUom || 'KG', // Form handles weight in chosen UOM
 
         length: form.lengthMM ? Number(form.lengthMM) : null,
         width: form.widthMM ? Number(form.widthMM) : null,
@@ -293,9 +306,12 @@ export default function MaterialCreate() {
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Dimensions & Weight</Typography>
           <Grid container spacing={2}>
+            {/* Base */}
+            <Grid item xs={12}><Typography variant="subtitle2" color="text.secondary" sx={{ mb: -1 }}>Base Specification</Typography></Grid>
             <Grid item xs={3}><TextField select label="Base UOM" required fullWidth size="small" value={form.baseUOM} onChange={onChange('baseUOM')}>{UOMS.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
-            <Grid item xs={3}><TextField type="number" label="Net Wgt (kg)" fullWidth size="small" value={form.netWeightKg} onChange={onChange('netWeightKg')} /></Grid>
-            <Grid item xs={6} />
+            <Grid item xs={3}><TextField type="number" label="Net Weight" fullWidth size="small" value={form.netWeightKg} onChange={onChange('netWeightKg')} /></Grid>
+            <Grid item xs={2}><TextField select label="Weight UOM" fullWidth size="small" value={form.netWeightUom} onChange={onChange('netWeightUom')}>{UOMS.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
+            <Grid item xs={4} />
             <Grid item xs={3}><TextField type="number" label="Length" fullWidth size="small" value={form.lengthMM} onChange={onChange('lengthMM')} /></Grid>
             <Grid item xs={3}><TextField type="number" label="Width" fullWidth size="small" value={form.widthMM} onChange={onChange('widthMM')} /></Grid>
             <Grid item xs={3}><TextField type="number" label="Height" fullWidth size="small" value={form.heightMM} onChange={onChange('heightMM')} /></Grid>
@@ -304,11 +320,27 @@ export default function MaterialCreate() {
                    <MenuItem value="MM">MM</MenuItem>
                    <MenuItem value="CM">CM</MenuItem>
                    <MenuItem value="IN">IN</MenuItem>
+                   <MenuItem value="M">M</MenuItem>
                </TextField>
             </Grid>
-            <Grid item xs={4}><TextField select label="Trade UOM" fullWidth size="small" value={form.tradeUOM} onChange={onChange('tradeUOM')}>{UOMS.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
-            <Grid item xs={4}><TextField type="number" label="Trade Wgt (kg)" fullWidth size="small" value={form.tradeWeightKg} onChange={onChange('tradeWeightKg')} /></Grid>
-            <Grid item xs={4}><TextField label="Trade Dimensions" fullWidth size="small" value={form.tradeDimensionsMM} onChange={onChange('tradeDimensionsMM')} /></Grid>
+
+            {/* Trade */}
+            <Grid item xs={12}><Typography variant="subtitle2" color="text.secondary" sx={{ mt: 1, mb: -1 }}>Trade Specification</Typography></Grid>
+            <Grid item xs={3}><TextField select label="Trade UOM" fullWidth size="small" value={form.tradeUOM} onChange={onChange('tradeUOM')}>{UOMS.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
+            <Grid item xs={3}><TextField type="number" label="Trade Weight" fullWidth size="small" value={form.tradeWeightKg} onChange={onChange('tradeWeightKg')} /></Grid>
+            <Grid item xs={2}><TextField select label="Weight UOM" fullWidth size="small" value={form.tradeWeightUom} onChange={onChange('tradeWeightUom')}>{UOMS.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
+            <Grid item xs={4} />
+            <Grid item xs={3}><TextField type="number" label="Trade Length" fullWidth size="small" value={form.tradeLengthMM} onChange={onChange('tradeLengthMM')} /></Grid>
+            <Grid item xs={3}><TextField type="number" label="Trade Width" fullWidth size="small" value={form.tradeWidthMM} onChange={onChange('tradeWidthMM')} /></Grid>
+            <Grid item xs={3}><TextField type="number" label="Trade Height" fullWidth size="small" value={form.tradeHeightMM} onChange={onChange('tradeHeightMM')} /></Grid>
+            <Grid item xs={3}>
+               <TextField select label="Trade Dim UOM" fullWidth size="small" value={form.tradeDimensionUom} onChange={onChange('tradeDimensionUom')}>
+                   <MenuItem value="MM">MM</MenuItem>
+                   <MenuItem value="CM">CM</MenuItem>
+                   <MenuItem value="IN">IN</MenuItem>
+                   <MenuItem value="M">M</MenuItem>
+               </TextField>
+            </Grid>
           </Grid>
         </Paper>
       )}
@@ -317,9 +349,10 @@ export default function MaterialCreate() {
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Storage & Handling</Typography>
           <Grid container spacing={2}>
-            <Grid item xs={4}><TextField type="number" label="Shelf Life (days)" fullWidth size="small" value={form.shelfLifeDays} onChange={onChange('shelfLifeDays')} /></Grid>
-            <Grid item xs={4}><TextField select label="Storage Type" fullWidth size="small" value={form.storageType} onChange={onChange('storageType')}>{STORAGE_TYPES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
-            <Grid item xs={4}><TextField select label="Procurement Type" fullWidth size="small" value={form.procurementType} onChange={onChange('procurementType')}>{PROCUREMENT_TYPES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
+            <Grid item xs={3}><TextField type="number" label="Shelf Life (days)" fullWidth size="small" value={form.shelfLifeDays} onChange={onChange('shelfLifeDays')} /></Grid>
+            <Grid item xs={3}><TextField select label="Storage Type" fullWidth size="small" value={form.storageType} onChange={onChange('storageType')}>{STORAGE_TYPES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
+            <Grid item xs={3}><TextField select label="Procurement Type" fullWidth size="small" value={form.procurementType} onChange={onChange('procurementType')}>{PROCUREMENT_TYPES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
+            <Grid item xs={3}><TextField select label="Vehicle Type" fullWidth size="small" value={form.vehicleType} onChange={onChange('vehicleType')}>{VEHICLE_TYPES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
             <Grid item xs={6}><TextField type="number" label="Temp Min (°C)" fullWidth size="small" value={form.handlingParameter.temperatureMin} onChange={onHP('temperatureMin')} /></Grid>
             <Grid item xs={6}><TextField type="number" label="Temp Max (°C)" fullWidth size="small" value={form.handlingParameter.temperatureMax} onChange={onHP('temperatureMax')} /></Grid>
             <Grid item xs={6}><TextField type="number" label="Humidity Min (%)" fullWidth size="small" value={form.handlingParameter.humidityMin} onChange={onHP('humidityMin')} /></Grid>

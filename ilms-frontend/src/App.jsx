@@ -98,16 +98,14 @@ function NavBar({ onLogout }) {
         { label: 'Definitions', icon: ListAlt, path: '/master-definitions' },
       ]
     },
-    // {
-    //   label: 'Inventory',
-    //   icon: Inventory2,
-    //   stateKey: 'inventoryOpen',
-    //   children: [
-    //     { label: 'Generate Serials', icon: QrCodeScanner, path: '/inventory/serials' },
-    //     { label: 'Scan Confirmation', icon: QrCodeScanner, path: '/inventory/scan' },
-    //     { label: 'Registration', icon: Inventory2, path: '/inventory/register' },
-    //   ]
-    // },
+    {
+      label: 'Inventory',
+      icon: Inventory2,
+      stateKey: 'inventoryOpen',
+      children: [
+        { label: 'Generate Label', icon: Print, path: '/labels/generate' }
+      ]
+    },
     {
       label: 'Label Management',
       icon: Style,
@@ -307,6 +305,7 @@ export default function App() {
           <Route path="/label-management/material-inventory/:hierarchyId" element={<MaterialInventory />} />
           <Route path="/label-templates" element={<LabelDashboard />} />
           <Route path="/label-templates/*" element={<LabelDashboard />} />
+          <Route path="/labels/generate" element={<PrintStation />} />
           <Route path="/print/:hierarchyId" element={<PrintStation />} />
           <Route path="/inventory/register" element={<Registration />} />
           <Route path="/inventory/serials" element={<SerialGeneration />} />
