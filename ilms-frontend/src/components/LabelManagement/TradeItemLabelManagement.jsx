@@ -94,8 +94,9 @@ export default function TradeItemLabelManagement() {
     const loadHierarchies = async () => {
         try {
             const data = await PackagingAPI.getHierarchies();
-            setHierarchies(data);
-            if (data.length > 0 && !selectedHierarchy) setSelectedHierarchy(data[0]);
+            const tradeHierarchies = data.filter(h => !h.name.startsWith('Shipping -'));
+            setHierarchies(tradeHierarchies);
+            if (tradeHierarchies.length > 0 && !selectedHierarchy) setSelectedHierarchy(tradeHierarchies[0]);
         } catch (e) { console.error(e); }
     };
 
@@ -411,7 +412,7 @@ export default function TradeItemLabelManagement() {
                             sx={{ mb: 2 }}
                         >
                             <MenuItem value="" disabled><em>Select Level</em></MenuItem>
-                            {FMCG_PACKAGING_DATA.map((pkg) => (
+                            {FMCG_PACKAGING_DATA.filter(pkg => !['Pallet', 'Container'].includes(pkg.type)).map((pkg) => (
                                 <MenuItem key={pkg.name} value={pkg.name}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         {getIconForType(pkg.type || pkg.name)}

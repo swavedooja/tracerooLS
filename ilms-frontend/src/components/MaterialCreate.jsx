@@ -23,8 +23,9 @@ import {
   CardMedia,
   CardActions,
   Tooltip,
+  Autocomplete, Chip,
 } from '@mui/material';
-import { AutoFixHigh, CloudUpload, Delete, Image as ImageIcon } from '@mui/icons-material';
+import { AutoFixHigh, CloudUpload, Delete, Image as ImageIcon, Add } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { MaterialsAPI } from '../services/APIService';
 import MaterialDetailCard from './MaterialDetailCard';
@@ -37,7 +38,7 @@ const STORAGE_TYPES = ['Ambient', 'Cool Storage', 'Cold Storage'];
 const PROCUREMENT_TYPES = ['Make To Stock', 'Make To Order', 'Purchase'];
 const VEHICLE_TYPES = ['Bulker', 'Tanker', 'Flatbed', 'Refrigerated Truck', 'Standard Container'];
 const UOMS = ['EA', 'KG', 'LT', 'TON', 'ML', 'GM'];
-const STEPS = ['General', 'Dimensions & Weight', 'Storage & Handling', 'Identifiers', 'Images', 'Flags', 'Review & Submit'];
+const STEPS = ['General', 'Dimensions & Weight', 'Storage & Handling', 'Packaging', 'Identifiers', 'Images', 'Flags', 'Review & Submit'];
 
 export default function MaterialCreate() {
   const navigate = useNavigate();
@@ -48,7 +49,9 @@ export default function MaterialCreate() {
     materialCode: '',
     materialName: '',
     description: '',
-    sku: '',
+    packagingTypes: [],
+    packagingMaterials: [],
+    skus: [],
     countryOfOrigin: '',
     type: '',
     materialClass: '',
@@ -145,7 +148,9 @@ export default function MaterialCreate() {
       materialCode: `MAT-${unique}`,
       materialName: `Auto Material ${unique}`,
       description: 'Auto-generated material for testing',
-      sku: `SKU-${unique}`,
+      packagingTypes: ['Global'],
+      packagingMaterials: ['Carton'],
+      skus: [{ name: `SKU-${unique}-Base`, type: 'Bottle' }],
       countryOfOrigin: 'USA',
       type: TYPES[0],
       materialClass: CLASSES[0],
@@ -210,12 +215,14 @@ export default function MaterialCreate() {
       case 2:
         return true;
       case 3:
+        return true; 
+      case 4: 
         return true;
-      case 4: // Images - optional
+      case 5: // Images - optional
         return true;
-      case 5: // Flags
+      case 6: // Flags
         return true;
-      case 6: // Review
+      case 7: // Review
         return valid;
       default:
         return true;
@@ -256,6 +263,9 @@ export default function MaterialCreate() {
         isHazmat: form.handlingParameter.hazardousClass && form.handlingParameter.hazardousClass !== 'None',
         hazmatClass: form.handlingParameter.hazardousClass,
         unNumber: null, // No field in form
+        packagingTypes: form.packagingTypes,
+        packagingMaterials: form.packagingMaterials,
+        skus: form.skus,
 
         status: 'ACTIVE'
       };
@@ -292,7 +302,6 @@ export default function MaterialCreate() {
             <Grid item xs={6}><TextField label="Material Code" required fullWidth size="small" value={form.materialCode} onChange={onChange('materialCode')} /></Grid>
             <Grid item xs={6}><TextField label="Material Name" required fullWidth size="small" value={form.materialName} onChange={onChange('materialName')} /></Grid>
             <Grid item xs={12}><TextField label="Description" multiline minRows={2} fullWidth size="small" value={form.description} onChange={onChange('description')} /></Grid>
-            <Grid item xs={6}><TextField label="SKU" fullWidth size="small" value={form.sku} onChange={onChange('sku')} /></Grid>
             <Grid item xs={6}><TextField label="Country of Origin" fullWidth size="small" value={form.countryOfOrigin} onChange={onChange('countryOfOrigin')} /></Grid>
             <Grid item xs={6}><TextField select label="Material Type" required fullWidth size="small" value={form.type} onChange={onChange('type')}>{TYPES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
             <Grid item xs={6}><TextField select label="Material State" fullWidth size="small" value={form.materialState} onChange={onChange('materialState')}>{STATES.map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}</TextField></Grid>
@@ -367,6 +376,69 @@ export default function MaterialCreate() {
 
       {activeStep === 3 && (
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Packaging Settings</Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Autocomplete
+                multiple
+                freeSolo
+                options={['Global', 'Economy', 'Standard', 'Premium', 'Value Pack']}
+                value={form.packagingTypes}
+                onChange={(e, newValue) => setForm(f => ({ ...f, packagingTypes: newValue }))}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip variant="outlined" label={option} size="small" {...getTagProps({ index })} />
+                  ))
+                }
+                renderInput={(params) => <TextField {...params} label="Packaging Types" placeholder="Type and press Enter" size="small" />}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Autocomplete
+                multiple
+                freeSolo
+                options={['Carton', 'Box', 'Wooden Crate', 'Premium Wrap']}
+                value={form.packagingMaterials}
+                onChange={(e, newValue) => setForm(f => ({ ...f, packagingMaterials: newValue }))}
+                renderTags={(value, getTagProps) =>
+                  value.map((option, index) => (
+                    <Chip variant="outlined" label={option} size="small" {...getTagProps({ index })} />
+                  ))
+                }
+                renderInput={(params) => <TextField {...params} label="Packaging Materials" placeholder="Type and press Enter" size="small" />}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="subtitle2" color="text.secondary">SKU Configurations</Typography>
+                <Button size="small" startIcon={<Add />} onClick={() => setForm(f => ({ ...f, skus: [...(f.skus || []), { name: '', type: '' }] }))}>Add SKU</Button>
+              </Box>
+              {(form.skus || []).map((sku, index) => (
+                <Box key={index} sx={{ display: 'flex', gap: 2, mt: 1, alignItems: 'flex-start' }}>
+                  <TextField label="SKU Name" size="small" fullWidth value={sku.name} onChange={e => {
+                    const newSkus = [...form.skus];
+                    newSkus[index].name = e.target.value;
+                    setForm(f => ({ ...f, skus: newSkus }));
+                  }} />
+                  <TextField label="SKU Type" size="small" fullWidth value={sku.type} onChange={e => {
+                    const newSkus = [...form.skus];
+                    newSkus[index].type = e.target.value;
+                    setForm(f => ({ ...f, skus: newSkus }));
+                  }} />
+                  <IconButton color="error" onClick={() => {
+                    const newSkus = [...form.skus];
+                    newSkus.splice(index, 1);
+                    setForm(f => ({ ...f, skus: newSkus }));
+                  }}><Delete /></IconButton>
+                </Box>
+              ))}
+            </Grid>
+          </Grid>
+        </Paper>
+      )}
+
+      {activeStep === 4 && (
+        <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Identifiers</Typography>
           <Grid container spacing={2}>
             <Grid item xs={6}><TextField label="Material EAN/UPC" fullWidth size="small" value={form.materialEANupc} onChange={onChange('materialEANupc')} /></Grid>
@@ -377,7 +449,7 @@ export default function MaterialCreate() {
         </Paper>
       )}
 
-      {activeStep === 4 && (
+      {activeStep === 5 && (
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
             <ImageIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -467,7 +539,7 @@ export default function MaterialCreate() {
         </Paper>
       )}
 
-      {activeStep === 5 && (
+      {activeStep === 6 && (
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Flags</Typography>
           <Grid container>
@@ -483,7 +555,7 @@ export default function MaterialCreate() {
         </Paper>
       )}
 
-      {activeStep === 6 && (
+      {activeStep === 7 && (
         <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Review</Typography>
           <MaterialDetailCard material={form} images={images.map(i => i.dataUrl)} />
@@ -493,10 +565,10 @@ export default function MaterialCreate() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
         <Button disabled={activeStep === 0} onClick={() => setActiveStep(s => Math.max(0, s - 1))}>Back</Button>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          {activeStep < 6 && (
+          {activeStep < 7 && (
             <Button variant="contained" onClick={() => setActiveStep(s => s + 1)} disabled={!stepValid}>Next</Button>
           )}
-          {activeStep === 6 && (
+          {activeStep === 7 && (
             <>
               <Button variant="outlined" onClick={() => setPreviewOpen(true)} disabled={!valid}>Preview</Button>
               <Button variant="contained" onClick={submit} disabled={!valid || saving}>{saving ? 'Saving...' : 'Submit'}</Button>

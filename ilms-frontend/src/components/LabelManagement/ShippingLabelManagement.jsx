@@ -64,6 +64,7 @@ const PRODUCT_HIERARCHY_DATA = {
 export default function ShippingLabelManagement() {
     const navigate = useNavigate();
     const [hierarchies, setHierarchies] = useState([]);
+    const [allHierarchies, setAllHierarchies] = useState([]);
     const [selectedHierarchy, setSelectedHierarchy] = useState(null);
     const [levels, setLevels] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
@@ -93,8 +94,10 @@ export default function ShippingLabelManagement() {
     const loadHierarchies = async () => {
         try {
             const data = await PackagingAPI.getHierarchies();
-            setHierarchies(data);
-            if (data.length > 0 && !selectedHierarchy) setSelectedHierarchy(data[0]);
+            setAllHierarchies(data);
+            const shippingHierarchies = data.filter(h => h.name.startsWith('Shipping -'));
+            setHierarchies(shippingHierarchies);
+            if (shippingHierarchies.length > 0 && !selectedHierarchy) setSelectedHierarchy(shippingHierarchies[0]);
         } catch (e) { console.error(e); }
     };
 
@@ -107,7 +110,7 @@ export default function ShippingLabelManagement() {
 
     const createHierarchy = async () => {
         if (!selectedBaseHierarchy) return;
-        const baseH = hierarchies.find(h => h.id === selectedBaseHierarchy);
+        const baseH = allHierarchies.find(h => h.id === selectedBaseHierarchy);
         if (!baseH) return;
 
         const generatedName = `Shipping - ${baseH.name}`;
@@ -316,7 +319,7 @@ export default function ShippingLabelManagement() {
                         helperText="Select a trade hierarchy to act as the base (Level 1) of your shipping structure."
                     >
                         <option value=""></option>
-                        {hierarchies
+                        {allHierarchies
                             .filter(h => !h.name.startsWith('Shipping -'))
                             .map(h => (
                                 <option key={h.id} value={h.id}>{h.name}</option>
@@ -353,7 +356,7 @@ export default function ShippingLabelManagement() {
                             sx={{ mb: 2 }}
                         >
                             <MenuItem value="" disabled><em>Select Level</em></MenuItem>
-                            {FMCG_PACKAGING_DATA.map((pkg) => (
+                            {FMCG_PACKAGING_DATA.filter(pkg => ['Pallet', 'Container'].includes(pkg.type)).map((pkg) => (
                                 <MenuItem key={pkg.name} value={pkg.name}>
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                         {getIconForType(pkg.type || pkg.name)}

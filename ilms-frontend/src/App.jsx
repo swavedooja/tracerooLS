@@ -65,7 +65,8 @@ import {
   Timeline,
   ListAlt,
   Storage,
-  Archive
+  Archive,
+  Print
 } from '@mui/icons-material';
 
 const AnimatedBox = motion(Box);
