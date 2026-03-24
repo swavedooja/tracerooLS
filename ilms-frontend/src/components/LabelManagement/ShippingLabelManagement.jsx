@@ -56,9 +56,7 @@ export default function ShippingLabelManagement() {
     const [levels, setLevels] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
     const [ssccPrefix, setSsccPrefix] = useState('');
-    const [selectedProduct, setSelectedProduct] = useState('');
-    const [selectedSku, setSelectedSku] = useState('');
-    const [selectedPackagingType, setSelectedPackagingType] = useState('');
+    const [selectedBaseHierarchy, setSelectedBaseHierarchy] = useState('');
 
     // Level editing
     const [openLevelDialog, setOpenLevelDialog] = useState(false);
@@ -96,16 +94,19 @@ export default function ShippingLabelManagement() {
     };
 
     const createHierarchy = async () => {
-        if (!selectedProduct || !selectedSku || !selectedPackagingType) return;
-        const generatedName = `${selectedProduct} - ${selectedSku} - ${selectedPackagingType}`;
+        if (!selectedBaseHierarchy) return;
+        const baseH = hierarchies.find(h => h.id === selectedBaseHierarchy);
+        if (!baseH) return;
+
+        const generatedName = `Shipping - ${baseH.name}`;
         try {
             const nameToSave = ssccPrefix ? `${generatedName} (SSCC: ${ssccPrefix})` : generatedName;
             const data = await PackagingAPI.createHierarchy({ name: nameToSave });
             
-            // Now automatically create the first level based on the selected SKU
+            // Apply the selected trade hierarchy as the base level
             await PackagingAPI.createLevel({
                 hierarchy_id: data.id,
-                level_name: selectedSku,
+                level_name: `Base: ${baseH.name}`,
                 level_order: 1,
                 capacity: 1
             });
@@ -113,13 +114,11 @@ export default function ShippingLabelManagement() {
             setHierarchies([...hierarchies, data]);
             setSelectedHierarchy(data);
             
-            // Reload levels so the new auto-created level appears
+            // Reload levels so the new base level appears
             loadLevels(data.id);
             
             setOpenDialog(false);
-            setSelectedProduct('');
-            setSelectedSku('');
-            setSelectedPackagingType('');
+            setSelectedBaseHierarchy('');
             setSsccPrefix('');
         } catch (e) { console.error(e); }
     };
@@ -296,71 +295,21 @@ export default function ShippingLabelManagement() {
                         select
                         autoFocus
                         margin="dense"
-                        label="Product"
+                        label="Base Trade Item Hierarchy"
                         fullWidth
-                        value={selectedProduct}
-                        onChange={(e) => {
-                            setSelectedProduct(e.target.value);
-                            setSelectedSku('');
-                            setSelectedPackagingType('');
-                        }}
+                        value={selectedBaseHierarchy}
+                        onChange={(e) => setSelectedBaseHierarchy(e.target.value)}
                         sx={{ mb: 2, mt: 1 }}
                         SelectProps={{ native: true }}
+                        helperText="Select a trade hierarchy to act as the base (Level 1) of your shipping structure."
                     >
                         <option value=""></option>
-                        {Object.keys(PRODUCT_HIERARCHY_DATA).map(prod => (
-                            <option key={prod} value={prod}>{prod}</option>
-                        ))}
+                        {hierarchies
+                            .filter(h => !h.name.startsWith('Shipping -'))
+                            .map(h => (
+                                <option key={h.id} value={h.id}>{h.name}</option>
+                            ))}
                     </TextField>
-
-                    {selectedProduct && (
-                        <>
-                            <TextField
-                                select
-                                margin="dense"
-                                label="SKU"
-                                fullWidth
-                                value={selectedSku}
-                                onChange={(e) => setSelectedSku(e.target.value)}
-                                sx={{ mb: 2 }}
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {PRODUCT_HIERARCHY_DATA[selectedProduct].skus.map(sku => (
-                                    <option key={sku.name} value={sku.name}>{sku.name}</option>
-                                ))}
-                            </TextField>
-
-                            {/* Show details for selected SKU */}
-                            {(() => {
-                                const activeSku = PRODUCT_HIERARCHY_DATA[selectedProduct].skus.find(s => s.name === selectedSku);
-                                if (!activeSku) return null;
-                                return (
-                                    <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2, border: '1px solid #e0e0e0' }}>
-                                        <Typography variant="body2" color="text.secondary"><strong>Type:</strong> {activeSku.type}</Typography>
-                                        <Typography variant="body2" color="text.secondary"><strong>Dimensions:</strong> {activeSku.dimensions}</Typography>
-                                        <Typography variant="body2" color="text.secondary"><strong>Weight:</strong> {activeSku.weight}</Typography>
-                                    </Box>
-                                );
-                            })()}
-
-                            <TextField
-                                select
-                                margin="dense"
-                                label="Packaging Type"
-                                fullWidth
-                                value={selectedPackagingType}
-                                onChange={(e) => setSelectedPackagingType(e.target.value)}
-                                sx={{ mb: 2 }}
-                                SelectProps={{ native: true }}
-                            >
-                                <option value=""></option>
-                                {PRODUCT_HIERARCHY_DATA[selectedProduct].packagingTypes.map(ptype => (
-                                    <option key={ptype} value={ptype}>{ptype}</option>
-                                ))}
-                            </TextField>
-                        </>
-                    )}
                     <TextField
                         margin="dense"
                         label="SSCC Company Prefix"
@@ -372,7 +321,7 @@ export default function ShippingLabelManagement() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button onClick={createHierarchy} variant="contained" disabled={!selectedProduct || !selectedSku || !selectedPackagingType}>Create</Button>
+                    <Button onClick={createHierarchy} variant="contained" disabled={!selectedBaseHierarchy}>Create</Button>
                 </DialogActions>
             </Dialog>
 
