@@ -68,7 +68,6 @@ export default function ShippingLabelManagement() {
     const [selectedHierarchy, setSelectedHierarchy] = useState(null);
     const [levels, setLevels] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
-    const [ssccPrefix, setSsccPrefix] = useState('');
     const [selectedBaseHierarchy, setSelectedBaseHierarchy] = useState('');
 
     // List Filters
@@ -120,8 +119,7 @@ export default function ShippingLabelManagement() {
 
         const generatedName = `Shipping - ${baseH.name}`;
         try {
-            const nameToSave = ssccPrefix ? `${generatedName} (SSCC: ${ssccPrefix})` : generatedName;
-            const data = await PackagingAPI.createHierarchy({ name: nameToSave });
+            const data = await PackagingAPI.createHierarchy({ name: generatedName });
             
             // Apply the selected trade hierarchy as the base level
             await PackagingAPI.createLevel({
@@ -139,7 +137,6 @@ export default function ShippingLabelManagement() {
             
             setOpenDialog(false);
             setSelectedBaseHierarchy('');
-            setSsccPrefix('');
         } catch (e) { console.error(e); }
     };
 
@@ -348,14 +345,6 @@ export default function ShippingLabelManagement() {
                                 <option key={h.id} value={h.id}>{h.name}</option>
                             ))}
                     </TextField>
-                    <TextField
-                        margin="dense"
-                        label="SSCC Company Prefix"
-                        fullWidth
-                        value={ssccPrefix}
-                        onChange={(e) => setSsccPrefix(e.target.value)}
-                        helperText="Used to generate Shipping Container Codes"
-                    />
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDialog(false)}>Cancel</Button>

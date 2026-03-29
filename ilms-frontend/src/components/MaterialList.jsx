@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, IconButton, TextField, Chip } from '@mui/material';
-import { Add, Edit, Delete, Search } from '@mui/icons-material';
+import { Box, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, IconButton, TextField, Chip, Dialog, DialogTitle, DialogContent } from '@mui/material';
+import { Add, Edit, Delete, Search, Visibility } from '@mui/icons-material';
 import { MaterialsAPI } from '../services/APIService';
+import MaterialDetailCard from './MaterialDetailCard';
 
 export default function MaterialList() {
   const navigate = useNavigate();
   const [materials, setMaterials] = useState([]);
   const [search, setSearch] = useState('');
+  const [viewMaterial, setViewMaterial] = useState(null);
 
   useEffect(() => {
     load();
@@ -72,6 +74,7 @@ export default function MaterialList() {
                 </TableCell>
                 <TableCell>{row.netWeight ? `${row.netWeight} ${row.weightUom || ''}` : '-'}</TableCell>
                 <TableCell align="right">
+                  <IconButton onClick={() => setViewMaterial(row)} color="info"><Visibility /></IconButton>
                   <IconButton onClick={() => navigate(`/materials/${row.code}`)} color="primary"><Edit /></IconButton>
                   <IconButton onClick={() => handleDelete(row.code)} color="error"><Delete /></IconButton>
                 </TableCell>
@@ -80,6 +83,40 @@ export default function MaterialList() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* View Material Dialog */}
+      <Dialog open={!!viewMaterial} onClose={() => setViewMaterial(null)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6">Material Details</Typography>
+          <IconButton onClick={() => setViewMaterial(null)} sx={{ p: 0 }}>
+             <Typography sx={{fontSize: 20}}>×</Typography>
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          {viewMaterial && (
+            <MaterialDetailCard 
+              material={{
+                materialCode: viewMaterial.code,
+                materialName: viewMaterial.name,
+                description: viewMaterial.description,
+                type: viewMaterial.type,
+                materialGroup: viewMaterial.category,
+                baseUOM: viewMaterial.baseUom,
+                netWeightKg: viewMaterial.netWeight,
+                dimensionsMM: viewMaterial.length ? `${viewMaterial.length}x${viewMaterial.width}x${viewMaterial.height} ${viewMaterial.dimensionUom}` : undefined,
+                shelfLifeDays: viewMaterial.shelfLifeDays,
+                isBatchManaged: viewMaterial.isBatchManaged,
+                isSerialized: viewMaterial.isSerialManaged,
+                isHazardous: viewMaterial.isHazmat,
+                handlingParameter: {
+                  hazardousClass: viewMaterial.hazmatClass
+                }
+              }} 
+              images={[]} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }
