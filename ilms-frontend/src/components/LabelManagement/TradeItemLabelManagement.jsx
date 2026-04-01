@@ -113,12 +113,16 @@ export default function TradeItemLabelManagement() {
     };
 
     const createHierarchy = async () => {
-        if (!selectedProduct || !selectedSku || !selectedPackagingType) return;
-        const generatedName = `${selectedProduct} - ${selectedSku} - ${selectedPackagingType}`;
+        if (!selectedProduct || !selectedSku) return;
+        
+        const generatedName = selectedPackagingType 
+            ? `${selectedProduct} - ${selectedSku} - ${selectedPackagingType}`
+            : `${selectedProduct} - ${selectedSku}`;
+            
         try {
             const data = await PackagingAPI.createHierarchy({ name: generatedName });
             
-            // Now automatically create the first level based on the selected SKU
+            // Automatically create the first level based on the selected SKU
             await PackagingAPI.createLevel({
                 hierarchy_id: data.id,
                 level_name: selectedSku,
@@ -126,10 +130,20 @@ export default function TradeItemLabelManagement() {
                 capacity: 1
             });
 
+            // If a packaging type was selected, automatically create the second level
+            if (selectedPackagingType) {
+                await PackagingAPI.createLevel({
+                    hierarchy_id: data.id,
+                    level_name: selectedPackagingType,
+                    level_order: 2,
+                    capacity: 10 // default capacity for packaging
+                });
+            }
+
             setHierarchies([...hierarchies, data]);
             setSelectedHierarchy(data);
             
-            // Reload levels so the new auto-created level appears
+            // Reload levels so the new auto-created levels appear
             loadLevels(data.id);
             
             setOpenDialog(false);
@@ -394,13 +408,13 @@ export default function TradeItemLabelManagement() {
                             <TextField
                                 select
                                 margin="dense"
-                                label="Packaging Type"
+                                label="Packaging Type (Optional)"
                                 fullWidth
                                 value={selectedPackagingType}
                                 onChange={(e) => setSelectedPackagingType(e.target.value)}
                                 sx={{ mb: 2 }}
                             >
-                                <MenuItem value="" disabled><em>Select Packaging</em></MenuItem>
+                                <MenuItem value=""><em>None</em></MenuItem>
                                 {PRODUCT_HIERARCHY_DATA[selectedProduct].packagingTypes.map(ptype => (
                                     <MenuItem key={ptype} value={ptype}>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -415,7 +429,7 @@ export default function TradeItemLabelManagement() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-                    <Button onClick={createHierarchy} variant="contained" disabled={!selectedProduct || !selectedSku || !selectedPackagingType}>Create</Button>
+                    <Button onClick={createHierarchy} variant="contained" disabled={!selectedProduct || !selectedSku}>Create</Button>
                 </DialogActions>
             </Dialog>
 

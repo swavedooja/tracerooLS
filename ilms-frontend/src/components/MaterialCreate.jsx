@@ -50,7 +50,6 @@ export default function MaterialCreate() {
     materialName: '',
     description: '',
     packagingTypes: [],
-    packagingMaterials: [],
     skus: [],
     countryOfOrigin: '',
     type: '',
@@ -149,8 +148,13 @@ export default function MaterialCreate() {
       materialName: `Auto Material ${unique}`,
       description: 'Auto-generated material for testing',
       packagingTypes: ['Global Packaging'],
-      packagingMaterials: [{ material: 'Carton', length: 400, width: 300, height: 300, dimUom: 'MM', weight: 1.2, weightUom: 'KG' }],
-      skus: [{ name: `SKU-${unique}-Base`, type: 'Bottle' }],
+      skus: [{ 
+         name: `SKU-${unique}-Base`, 
+         type: 'Bottle',
+         packagingMaterial: 'Carton',
+         quantity: 1,
+         length: 400, width: 300, height: 300, dimUom: 'MM', weight: 1.2, weightUom: 'KG'
+      }],
       countryOfOrigin: 'USA',
       type: TYPES[0],
       materialClass: CLASSES[0],
@@ -264,7 +268,7 @@ export default function MaterialCreate() {
         hazmatClass: form.handlingParameter.hazardousClass,
         unNumber: null, // No field in form
         packagingTypes: form.packagingTypes,
-        packagingMaterials: form.packagingMaterials,
+        packagingMaterials: form.packagingMaterials || [],
         skus: form.skus,
 
         status: 'ACTIVE'
@@ -411,72 +415,100 @@ export default function MaterialCreate() {
             </Grid>
             <Grid item xs={12}>
               <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="subtitle2" color="text.secondary">Packaging Materials</Typography>
-                <Button size="small" startIcon={<Add />} onClick={() => setForm(f => ({ ...f, packagingMaterials: [...(f.packagingMaterials || []), { material: '', length: '', width: '', height: '', dimUom: 'MM', weight: '', weightUom: 'KG' }] }))}>Add Material</Button>
+                <Typography variant="subtitle2" color="text.secondary">SKU & Packaging Configurations</Typography>
+                <Button size="small" startIcon={<Add />} onClick={() => setForm(f => ({ ...f, skus: [...(f.skus || []), { name: '', type: '', packagingMaterial: '', quantity: 1, length: '', width: '', height: '', dimUom: 'MM', weight: '', weightUom: 'KG' }] }))}>Add Configuration</Button>
               </Box>
-              {(form.packagingMaterials || []).map((mat, index) => (
+              {(form.skus || []).map((sku, index) => (
                 <Paper key={index} variant="outlined" sx={{ p: 2, mt: 1, bgcolor: '#fbfbfb' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                     <Typography variant="subtitle2">Material {index + 1}</Typography>
+                     <Typography variant="subtitle2">Configuration {index + 1}</Typography>
                      <IconButton size="small" color="error" onClick={() => {
-                        const newMats = [...form.packagingMaterials];
-                        newMats.splice(index, 1);
-                        setForm(f => ({ ...f, packagingMaterials: newMats }));
+                        const newSkus = [...form.skus];
+                        newSkus.splice(index, 1);
+                        setForm(f => ({ ...f, skus: newSkus }));
                      }}><Delete fontSize="small" /></IconButton>
                   </Box>
                   <Grid container spacing={2}>
+                    <Grid item xs={12} sm={3}>
+                       <TextField label="SKU Name" size="small" fullWidth value={sku.name || ''} onChange={e => {
+                         const newSkus = [...form.skus];
+                         newSkus[index].name = e.target.value;
+                         setForm(f => ({ ...f, skus: newSkus }));
+                       }} />
+                    </Grid>
+                    <Grid item xs={12} sm={3}>
+                       <TextField select label="SKU Type" size="small" fullWidth value={sku.type || ''} onChange={e => {
+                         const newSkus = [...form.skus];
+                         newSkus[index].type = e.target.value;
+                         setForm(f => ({ ...f, skus: newSkus }));
+                       }}>
+                         {['Bottle', 'Tube', 'Jar', 'Sachet', 'Box', 'Carton', 'Other'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
+                       </TextField>
+                    </Grid>
                     <Grid item xs={12} sm={4}>
-                       <TextField select label="Material" size="small" fullWidth value={mat.material || ''} onChange={e => {
-                           const nm = [...form.packagingMaterials];
-                           nm[index] = { ...nm[index], material: e.target.value };
-                           setForm(f => ({ ...f, packagingMaterials: nm }));
+                       <TextField select label="Packaging Material" size="small" fullWidth value={sku.packagingMaterial || ''} onChange={e => {
+                           const newSkus = [...form.skus];
+                           newSkus[index].packagingMaterial = e.target.value;
+                           setForm(f => ({ ...f, skus: newSkus }));
                        }}>
                            {['Box', 'Carton', 'Wooden Crate', 'Premium Wrap', 'Shrink Wrap'].map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
                        </TextField>
                     </Grid>
-                    <Grid item xs={4} sm={2}><TextField type="number" label="Length" size="small" fullWidth value={mat.length || ''} onChange={e => { const nm=[...form.packagingMaterials]; nm[index]={...nm[index], length:e.target.value}; setForm(f=>({...f, packagingMaterials:nm})) }} /></Grid>
-                    <Grid item xs={4} sm={2}><TextField type="number" label="Width" size="small" fullWidth value={mat.width || ''} onChange={e => { const nm=[...form.packagingMaterials]; nm[index]={...nm[index], width:e.target.value}; setForm(f=>({...f, packagingMaterials:nm})) }} /></Grid>
-                    <Grid item xs={4} sm={2}><TextField type="number" label="Height" size="small" fullWidth value={mat.height || ''} onChange={e => { const nm=[...form.packagingMaterials]; nm[index]={...nm[index], height:e.target.value}; setForm(f=>({...f, packagingMaterials:nm})) }} /></Grid>
                     <Grid item xs={12} sm={2}>
-                       <TextField select label="Dim UOM" size="small" fullWidth value={mat.dimUom || 'MM'} onChange={e => { const nm=[...form.packagingMaterials]; nm[index]={...nm[index], dimUom:e.target.value}; setForm(f=>({...f, packagingMaterials:nm})) }}>
+                       <TextField type="number" label="Quantity" size="small" fullWidth value={sku.quantity ?? 1} onChange={e => {
+                           const newSkus = [...form.skus];
+                           newSkus[index].quantity = e.target.value;
+                           setForm(f => ({ ...f, skus: newSkus }));
+                       }} />
+                    </Grid>
+                    <Grid item xs={4} sm={2}>
+                       <TextField type="number" label="Length" size="small" fullWidth value={sku.length || ''} onChange={e => {
+                           const newSkus = [...form.skus];
+                           newSkus[index].length = e.target.value;
+                           setForm(f => ({ ...f, skus: newSkus }));
+                       }} />
+                    </Grid>
+                    <Grid item xs={4} sm={2}>
+                       <TextField type="number" label="Width" size="small" fullWidth value={sku.width || ''} onChange={e => {
+                           const newSkus = [...form.skus];
+                           newSkus[index].width = e.target.value;
+                           setForm(f => ({ ...f, skus: newSkus }));
+                       }} />
+                    </Grid>
+                    <Grid item xs={4} sm={2}>
+                       <TextField type="number" label="Height" size="small" fullWidth value={sku.height || ''} onChange={e => {
+                           const newSkus = [...form.skus];
+                           newSkus[index].height = e.target.value;
+                           setForm(f => ({ ...f, skus: newSkus }));
+                       }} />
+                    </Grid>
+                    <Grid item xs={12} sm={2}>
+                       <TextField select label="Dim UOM" size="small" fullWidth value={sku.dimUom || 'MM'} onChange={e => {
+                           const newSkus = [...form.skus];
+                           newSkus[index].dimUom = e.target.value;
+                           setForm(f => ({ ...f, skus: newSkus }));
+                       }}>
                            {['MM', 'CM', 'IN', 'M'].map(u => <MenuItem key={u} value={u}>{u}</MenuItem>)}
                        </TextField>
                     </Grid>
-                    <Grid item xs={8} sm={4}><TextField type="number" label="Empty Weight" size="small" fullWidth value={mat.weight || ''} onChange={e => { const nm=[...form.packagingMaterials]; nm[index]={...nm[index], weight:e.target.value}; setForm(f=>({...f, packagingMaterials:nm})) }} /></Grid>
+                    <Grid item xs={8} sm={2}>
+                       <TextField type="number" label="Empty Weight" size="small" fullWidth value={sku.weight || ''} onChange={e => {
+                           const newSkus = [...form.skus];
+                           newSkus[index].weight = e.target.value;
+                           setForm(f => ({ ...f, skus: newSkus }));
+                       }} />
+                    </Grid>
                     <Grid item xs={4} sm={2}>
-                       <TextField select label="Weight UOM" size="small" fullWidth value={mat.weightUom || 'KG'} onChange={e => { const nm=[...form.packagingMaterials]; nm[index]={...nm[index], weightUom:e.target.value}; setForm(f=>({...f, packagingMaterials:nm})) }}>
+                       <TextField select label="Weight UOM" size="small" fullWidth value={sku.weightUom || 'KG'} onChange={e => {
+                           const newSkus = [...form.skus];
+                           newSkus[index].weightUom = e.target.value;
+                           setForm(f => ({ ...f, skus: newSkus }));
+                       }}>
                            {['KG', 'GM', 'LB', 'OZ'].map(u => <MenuItem key={u} value={u}>{u}</MenuItem>)}
                        </TextField>
                     </Grid>
                   </Grid>
                 </Paper>
-              ))}
-            </Grid>
-            <Grid item xs={12}>
-              <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="subtitle2" color="text.secondary">SKU Configurations</Typography>
-                <Button size="small" startIcon={<Add />} onClick={() => setForm(f => ({ ...f, skus: [...(f.skus || []), { name: '', type: '' }] }))}>Add SKU</Button>
-              </Box>
-              {(form.skus || []).map((sku, index) => (
-                <Box key={index} sx={{ display: 'flex', gap: 2, mt: 1, alignItems: 'flex-start' }}>
-                  <TextField label="SKU Name" size="small" fullWidth value={sku.name} onChange={e => {
-                    const newSkus = [...form.skus];
-                    newSkus[index].name = e.target.value;
-                    setForm(f => ({ ...f, skus: newSkus }));
-                  }} />
-                  <TextField select label="SKU Type" size="small" fullWidth value={sku.type} onChange={e => {
-                    const newSkus = [...form.skus];
-                    newSkus[index].type = e.target.value;
-                    setForm(f => ({ ...f, skus: newSkus }));
-                  }}>
-                    {['Bottle', 'Tube', 'Jar', 'Sachet', 'Box', 'Carton', 'Other'].map(t => <MenuItem key={t} value={t}>{t}</MenuItem>)}
-                  </TextField>
-                  <IconButton color="error" onClick={() => {
-                    const newSkus = [...form.skus];
-                    newSkus.splice(index, 1);
-                    setForm(f => ({ ...f, skus: newSkus }));
-                  }}><Delete /></IconButton>
-                </Box>
               ))}
             </Grid>
           </Grid>
