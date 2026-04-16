@@ -8,65 +8,62 @@ import { useNavigate } from 'react-router-dom';
 
 const getIconForType = (typeStr) => {
     const t = typeStr?.toLowerCase() || '';
-    if (t.includes('bottle') || t.includes('sachet')) return <LocalDrink fontSize="small" />;
-    if (t.includes('wine')) return <WineBar fontSize="small" />;
-    if (t.includes('box') || t.includes('carton') || t.includes('case')) return <Inventory fontSize="small" />;
-    if (t.includes('pallet')) return <Layers fontSize="small" />;
-    if (t.includes('container')) return <LocalShipping fontSize="small" />;
-    if (t.includes('soap') || t.includes('cream')) return <Spa fontSize="small" />;
-    if (t.includes('shampoo') || t.includes('tube')) return <ViewColumn fontSize="small" />;
+    if (t.includes('vial') || t.includes('ampoule') || t.includes('sachet')) return <LocalDrink fontSize="small" sx={{ color: '#0ea5e9' }} />;
+    if (t.includes('tablet') || t.includes('caplet')) return <Inventory fontSize="small" sx={{ color: '#6366f1' }} />;
+    if (t.includes('box') || t.includes('carton') || t.includes('case')) return <Inventory fontSize="small" sx={{ color: '#f59e0b' }} />;
+    if (t.includes('pallet')) return <Layers fontSize="small" sx={{ color: '#10b981' }} />;
+    if (t.includes('container') || t.includes('truck')) return <LocalShipping fontSize="small" sx={{ color: '#3b82f6' }} />;
+    if (t.includes('serum') || t.includes('vaccine') || t.includes('blood')) return <Spa fontSize="small" sx={{ color: '#ef4444' }} />;
+    if (t.includes('blister')) return <ViewColumn fontSize="small" sx={{ color: '#8b5cf6' }} />;
     return <Inventory fontSize="small" />;
 };
 
 const inferShape = (name) => {
     const n = (name || '').toLowerCase();
     if (n.includes('pallet')) return 'Pallet';
-    if (n.includes('carton') || n.includes('case') || n.includes('master')) return 'Carton';
-    if (n.includes('bottle') || n.includes('syrup') || n.includes('tube') || n.includes('sachet') || n.includes('vial')) return 'Bottle';
+    if (n.includes('case') || n.includes('master') || n.includes('shipper')) return 'Carton';
+    if (n.includes('vial') || n.includes('ampoule') || n.includes('bottle')) return 'Bottle';
+    if (n.includes('blister') || n.includes('flat')) return 'Box'; // Boxes are good for blisters
     return 'Box';
 };
 
-const FMCG_PACKAGING_DATA = [
-    { name: 'Shampoo Bottle (200ml)', type: 'Bottle', dimensions: '50mm x 50mm x 150mm', weight: '0.25kg' },
-    { name: 'Shampoo Bottle (500ml)', type: 'Bottle', dimensions: '70mm x 70mm x 220mm', weight: '0.6kg' },
-    { name: 'Fairness Cream Tube (50g)', type: 'Tube', dimensions: '30mm x 30mm x 120mm', weight: '0.06kg' },
-    { name: 'Fairness Cream Jar (100g)', type: 'Jar', dimensions: '60mm x 60mm x 50mm', weight: '0.15kg' },
-    { name: '12-Unit Display Box', type: 'Box', dimensions: '200mm x 150mm x 150mm', weight: '3.0kg' },
-    { name: '48-Unit Master Carton', type: 'Carton', dimensions: '400mm x 300mm x 300mm', weight: '12.0kg' },
-    { name: 'Standard Pallet', type: 'Pallet', dimensions: '1200mm x 1000mm x 1500mm', weight: '500kg' },
-    { name: 'Euro Pallet', type: 'Pallet', dimensions: '1200mm x 800mm x 1500mm', weight: '400kg' },
-    { name: '20ft Container', type: 'Container', dimensions: '5.9m x 2.35m x 2.39m', weight: 'Max 28,000kg' },
-    { name: '40ft Container', type: 'Container', dimensions: '12.0m x 2.35m x 2.39m', weight: 'Max 29,000kg' }
+const PHARMA_PACKAGING_DATA = [
+    { name: 'Amoxicillin Vial (10ml)', type: 'Vial', dimensions: '25mm x 25mm x 50mm', weight: '0.05kg' },
+    { name: 'Sterile Ampoule (2ml)', type: 'Ampoule', dimensions: '12mm x 12mm x 60mm', weight: '0.02kg' },
+    { name: 'Insulin Pen (3ml)', type: 'Syringe', dimensions: '15mm x 15mm x 160mm', weight: '0.08kg' },
+    { name: 'Blister Pack (10 Caplets)', type: 'Blister', dimensions: '100mm x 50mm x 5mm', weight: '0.01kg' },
+    { name: 'Secondary Folding Box', type: 'Box', dimensions: '120mm x 60mm x 40mm', weight: '0.15kg' },
+    { name: 'Master Shipper Case (50 Units)', type: 'Carton', dimensions: '400mm x 300mm x 250mm', weight: '8.5kg' },
+    { name: 'Euro Pharma Pallet', type: 'Pallet', dimensions: '1200mm x 800mm x 1400mm', weight: '350kg' },
+    { name: 'Cold-Chain Container', type: 'Container', dimensions: '2.2m x 1.5m x 1.6m', weight: 'Max 1,200kg' }
 ];
 
 const PRODUCT_HIERARCHY_DATA = {
-    "Shampoo": {
+    "Amoxicillin 250mg": {
         skus: [
-            { name: "Shampoo Bottle (200ml)", dimensions: "50mm x 50mm x 150mm", weight: "0.25kg", type: "Bottle" },
-            { name: "Shampoo Bottle (500ml)", dimensions: "70mm x 70mm x 220mm", weight: "0.6kg", type: "Bottle" },
-            { name: "Shampoo Sachet 50ml", dimensions: "50mm x 50mm x 5mm", weight: "0.05kg", type: "Sachet" }
+            { name: "Amoxicillin Blister (10 Caplets)", dimensions: "100mm x 50mm x 5mm", weight: "0.01kg", type: "Blister" },
+            { name: "Amoxicillin Vial (10ml)", dimensions: "25mm x 25mm x 50mm", weight: "0.05kg", type: "Vial" }
         ],
-        packagingTypes: ["Economy Packaging", "Global Packaging", "Standard Packaging"]
+        packagingTypes: ["Standard Pharma Carton", "Institutional Bulk Pack", "Global Export Case"]
     },
-    "Fairness Cream": {
+    "Insulin Glargine": {
         skus: [
-            { name: "Fairness Cream Tube (50g)", dimensions: "30mm x 30mm x 120mm", weight: "0.06kg", type: "Tube" },
-            { name: "Fairness Cream Jar (100g)", dimensions: "60mm x 60mm x 50mm", weight: "0.15kg", type: "Jar" }
+            { name: "Insulin Pre-filled Pen (3ml)", dimensions: "15mm x 15mm x 160mm", weight: "0.08kg", type: "Syringe" }
         ],
-        packagingTypes: ["Premium Packaging", "Standard Packaging"]
+        packagingTypes: ["Insulated Cold-Chain Case", "Standard Retail Box"]
     },
-    "Soap": {
+    "mRNA Vaccine": {
         skus: [
-            { name: "Soap Bar 100g", dimensions: "80mm x 50mm x 25mm", weight: "0.1kg", type: "Bar" },
-            { name: "Soap Pack 3x100g", dimensions: "80mm x 150mm x 25mm", weight: "0.3kg", type: "Pack" }
+            { name: "Single Dose Vial (2ml)", dimensions: "12mm x 12mm x 45mm", weight: "0.02kg", type: "Vial" },
+            { name: "Multi Dose Vial (10ml)", dimensions: "25mm x 25mm x 55mm", weight: "0.06kg", type: "Vial" }
         ],
-        packagingTypes: ["Value Pack", "Premium Wrap"]
+        packagingTypes: ["Ultra-Cold Shipper", "Ambient Buffer Box"]
     },
-    "Wine": {
+    "Sterile Saline": {
         skus: [
-            { name: "Wine Bottle 750ml", dimensions: "80mm x 80mm x 300mm", weight: "1.2kg", type: "Bottle" }
+            { name: "Saline IV Bag (500ml)", dimensions: "200mm x 120mm x 30mm", weight: "0.55kg", type: "Bag" }
         ],
-        packagingTypes: ["Wooden Crate", "Export Corrugated Box"]
+        packagingTypes: ["Sterile Overwrap Carton", "Standard Hospital Case"]
     }
 };
 
@@ -222,10 +219,10 @@ export default function TradeItemLabelManagement() {
                         <Box sx={{ display: 'flex', gap: 1 }}>
                             <TextField select size="small" fullWidth value={productFilter} onChange={e => setProductFilter(e.target.value)}>
                                 <MenuItem value="All">All Products</MenuItem>
-                                <MenuItem value="Shampoo">Shampoo</MenuItem>
-                                <MenuItem value="Cream">Cream</MenuItem>
-                                <MenuItem value="Soap">Soap</MenuItem>
-                                <MenuItem value="Wine">Wine</MenuItem>
+                                <MenuItem value="Amoxicillin">Amoxicillin</MenuItem>
+                                <MenuItem value="Insulin">Insulin</MenuItem>
+                                <MenuItem value="Vaccine">Vaccine</MenuItem>
+                                <MenuItem value="Saline">Saline</MenuItem>
                             </TextField>
                             <TextField select size="small" fullWidth value={sortOrder} onChange={e => setSortOrder(e.target.value)}>
                                 <MenuItem value="A-Z">Sort A-Z</MenuItem>
@@ -426,17 +423,17 @@ export default function TradeItemLabelManagement() {
                             sx={{ mb: 2 }}
                         >
                             <MenuItem value="" disabled><em>Select Level</em></MenuItem>
-                            {FMCG_PACKAGING_DATA.filter(pkg => {
+                            {PHARMA_PACKAGING_DATA.filter(pkg => {
                                 if (['Pallet', 'Container'].includes(pkg.type)) return false;
                                 const hName = selectedHierarchy?.name || '';
                                 let prod = null;
-                                if (hName.includes('Shampoo')) prod = 'Shampoo';
-                                else if (hName.includes('Cream')) prod = 'Cream';
-                                else if (hName.includes('Soap')) prod = 'Soap';
-                                else if (hName.includes('Wine')) prod = 'Wine';
+                                if (hName.includes('Amoxicillin')) prod = 'Amoxicillin';
+                                else if (hName.includes('Insulin')) prod = 'Insulin';
+                                else if (hName.includes('Vaccine')) prod = 'Vaccine';
+                                else if (hName.includes('Saline')) prod = 'Saline';
                                 
                                 if (prod && !['Box', 'Carton'].includes(pkg.type)) {
-                                    if (!pkg.name.includes(prod)) return false;
+                                    if (!pkg.name.toLowerCase().includes(prod.toLowerCase())) return false;
                                 }
                                 return true;
                             }).map((pkg) => (
@@ -450,7 +447,7 @@ export default function TradeItemLabelManagement() {
                         </TextField>
 
                         {(() => {
-                            const selectedPkg = FMCG_PACKAGING_DATA.find(p => p.name === levelForm.name);
+                            const selectedPkg = PHARMA_PACKAGING_DATA.find(p => p.name === levelForm.name);
                             if (!selectedPkg) return null;
                             return (
                                 <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2, border: '1px solid #e0e0e0' }}>

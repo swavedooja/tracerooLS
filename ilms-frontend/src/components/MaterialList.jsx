@@ -74,9 +74,9 @@ export default function MaterialList() {
                 </TableCell>
                 <TableCell>{row.netWeight ? `${row.netWeight} ${row.weightUom || ''}` : '-'}</TableCell>
                 <TableCell align="right">
-                  <IconButton onClick={() => setViewMaterial(row)} color="info"><Visibility /></IconButton>
-                  <IconButton onClick={() => navigate(`/materials/${row.code}`)} color="primary"><Edit /></IconButton>
-                  <IconButton onClick={() => handleDelete(row.code)} color="error"><Delete /></IconButton>
+                  <IconButton onClick={() => setViewMaterial(row)} color="info" title="Quick View"><Visibility /></IconButton>
+                  <IconButton onClick={() => navigate(`/materials/${row.code}?mode=edit`)} color="primary" title="Edit Material"><Edit /></IconButton>
+                  <IconButton onClick={() => handleDelete(row.code)} color="error" title="Delete"><Delete /></IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -85,35 +85,34 @@ export default function MaterialList() {
       </TableContainer>
 
       {/* View Material Dialog */}
-      <Dialog open={!!viewMaterial} onClose={() => setViewMaterial(null)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6">Material Details</Typography>
-          <IconButton onClick={() => setViewMaterial(null)} sx={{ p: 0 }}>
-             <Typography sx={{fontSize: 20}}>×</Typography>
+      <Dialog open={!!viewMaterial} onClose={() => setViewMaterial(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
+          <Typography variant="h6" fontWeight="bold">Material Insight</Typography>
+          <IconButton onClick={() => setViewMaterial(null)} sx={{ p: 1 }}>
+             <Typography sx={{fontSize: 24, lineHeight: 1}}>×</Typography>
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent sx={{ p: 0 }}>
           {viewMaterial && (
-            <MaterialDetailCard 
-              material={{
-                materialCode: viewMaterial.code,
-                materialName: viewMaterial.name,
-                description: viewMaterial.description,
-                type: viewMaterial.type,
-                materialGroup: viewMaterial.category,
-                baseUOM: viewMaterial.baseUom,
-                netWeightKg: viewMaterial.netWeight,
-                dimensionsMM: viewMaterial.length ? `${viewMaterial.length}x${viewMaterial.width}x${viewMaterial.height} ${viewMaterial.dimensionUom}` : undefined,
-                shelfLifeDays: viewMaterial.shelfLifeDays,
-                isBatchManaged: viewMaterial.isBatchManaged,
-                isSerialized: viewMaterial.isSerialManaged,
-                isHazardous: viewMaterial.isHazmat,
-                handlingParameter: {
-                  hazardousClass: viewMaterial.hazmatClass
-                }
-              }} 
-              images={[]} 
-            />
+            <Box>
+              <MaterialDetailCard 
+                material={viewMaterial} 
+                images={viewMaterial.images || []} 
+              />
+              <Box sx={{ p: 3, borderTop: '1px solid #e2e8f0', bgcolor: '#f8fafc', display: 'flex', justifyContent: 'center' }}>
+                <Button 
+                  variant="contained" 
+                  color="primary"
+                  onClick={() => {
+                    navigate(`/materials/${viewMaterial.code}?mode=view`);
+                    setViewMaterial(null);
+                  }}
+                  sx={{ borderRadius: 2, px: 4, textTransform: 'none', fontWeight: 'bold' }}
+                >
+                  View More Details
+                </Button>
+              </Box>
+            </Box>
           )}
         </DialogContent>
       </Dialog>

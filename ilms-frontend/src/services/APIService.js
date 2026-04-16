@@ -9,12 +9,19 @@ const generateUUID = () => {
 
 export const MaterialsAPI = {
   list: async () => {
-    const { data, error } = await supabase.from('materials').select('*');
+    const { data, error } = await supabase.from('materials').select(`
+      *,
+      material_image(*)
+    `);
     if (error) throw error;
     return data.map(transformMaterial);
   },
   get: async (code) => {
-    const { data, error } = await supabase.from('materials').select('*').eq('code', code).single();
+    const { data, error } = await supabase.from('materials').select(`
+      *,
+      material_image(*),
+      handling_parameter(*)
+    `).eq('code', code).single();
     if (error) throw error;
     return transformMaterial(data);
   },
@@ -169,8 +176,14 @@ export const MasterDefinitionsAPI = {
 };
 
 export const PackagingAPI = {
-  getHierarchies: async () => {
-    const { data, error } = await supabase.from('packaging_hierarchy').select('*');
+  getHierarchies: async (materialCode = null) => {
+    let query = supabase.from('packaging_hierarchy').select('*');
+    if (materialCode) {
+        // This assumes hierarchy has a material_code or we link via name for now
+        // Based on my seeding, I'll use a loose filter or update schema
+        query = query.ilike('name', `%${materialCode}%`);
+    }
+    const { data, error } = await query;
     if (error) throw error;
     return data;
   },
@@ -349,12 +362,12 @@ export const InventoryAPI = {
 const transformInventory = (i) => ({
   id: i.id,
   materialId: i.material?.id,
-  materialCode: i.material?.code,
-  materialName: i.material?.name,
+  materialCode: i.material?.code || i.material_code,
+  materialName: i.material?.name || i.material_code || 'Unnamed Material',
   serialNumber: i.serial_number,
-  batchNumber: i.batch_number,
+  batchNumber: i.batch_number || 'N/A',
   status: i.status,
-  qualityStatus: i.quality_status,
+  qualityStatus: i.quality_status || 'PENDING',
   locationId: i.location?.id,
   locationCode: i.location?.code,
   locationName: i.location?.name,
@@ -1061,33 +1074,75 @@ export const ShipmentAPI = {
   }
 };
 
+export const OrdersAPI = {
+  listPending: async () => {
+    const { data, error } = await supabase
+      .from('sales_orders')
+      .select('*')
+      .eq('status', 'PENDING')
+      .order('order_date', { ascending: false });
+    if (error) throw error;
+    return data;
+  },
+  getLines: async (orderId) => {
+    const { data, error } = await supabase
+      .from('sales_order_lines')
+      .select(`
+        *,
+        material:materials(*)
+      `)
+      .eq('order_id', orderId);
+    if (error) throw error;
+    return data;
+  }
+};
+
 // --- Helpers ---
 
-const transformMaterial = (m) => ({
-  id: m.id,
-  code: m.code,
-  name: m.name,
-  description: m.description,
-  type: m.type,
-  category: m.category,
-  baseUom: m.base_uom,
-  isBatchManaged: m.is_batch_managed,
-  isSerialManaged: m.is_serial_managed,
-  shelfLifeDays: m.shelf_life_days,
-  minStock: m.min_stock,
-  maxStock: m.max_stock,
-  grossWeight: m.gross_weight,
-  netWeight: m.net_weight,
-  weightUom: m.weight_uom,
-  length: m.length,
-  width: m.width,
-  height: m.height,
-  dimensionUom: m.dimension_uom,
-  isHazmat: m.is_hazmat,
-  hazmatClass: m.hazmat_class,
-  unNumber: m.un_number,
-  status: m.status
-});
+const transformMaterial = (m) => {
+  const images = (m.material_image || []).map(img => ({ id: img.id, url: img.url, type: img.type }));
+  const mainImage = images.find(img => img.type === 'MAIN')?.url || images[0]?.url || 'https://via.placeholder.com/600x400?text=No+Image';
+  
+  return {
+    id: m.id,
+    code: m.code,
+    materialCode: m.code,
+    name: m.name,
+    materialName: m.name,
+    description: m.description,
+    type: m.type,
+    category: m.category,
+    materialGroup: m.category,
+    baseUom: m.base_uom,
+    baseUOM: m.base_uom,
+    isBatchManaged: m.is_batch_managed,
+    isSerialManaged: m.is_serial_managed,
+    isSerialized: m.is_serial_managed,
+    shelfLifeDays: m.shelf_life_days,
+    minStock: m.min_stock,
+    maxStock: m.max_stock,
+    grossWeight: m.gross_weight,
+    netWeight: m.net_weight,
+    netWeightKg: m.net_weight,
+    weightUom: m.weight_uom || 'KG',
+    length: m.length,
+    width: m.width,
+    height: m.height,
+    dimensionUom: m.dimension_uom || 'MM',
+    isHazmat: m.is_hazmat,
+    isHazardous: m.is_hazmat,
+    hazmatClass: m.hazmat_class,
+    unNumber: m.un_number,
+    status: m.status,
+    images: images,
+    mainImage: mainImage,
+    handlingParameter: m.handling_parameter?.[0] || {
+        temperatureMin: m.temp_min || '',
+        temperatureMax: m.temp_max || '',
+        hazardousClass: m.hazmat_class || ''
+    }
+  };
+};
 
 const transformLocation = (l) => ({
   id: l.id,
