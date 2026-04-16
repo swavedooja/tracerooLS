@@ -226,6 +226,15 @@ export const InventoryAPI = {
     return data.map(transformInventory);
   },
 
+  markAsPrinted: async (ids) => {
+    const { data, error } = await supabase.from('inventory')
+      .update({ label_printed: 'Y' })
+      .in('id', ids)
+      .select();
+    if (error) throw error;
+    return data;
+  },
+
   get: async (id) => {
     const { data, error } = await supabase.from('inventory').select(`
             *,
@@ -355,6 +364,7 @@ const transformInventory = (i) => ({
   confirmedBy: i.confirmed_by,
   parentContainerType: i.parent_container_type,
   parentContainerId: i.parent_container_id,
+  labelPrinted: i.label_printed,
   createdAt: i.created_at
 });
 
