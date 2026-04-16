@@ -221,7 +221,7 @@ export const InventoryAPI = {
     let query = supabase.from('inventory').select(`
             *,
             material:materials(id, code, name),
-            location:locations(id, code, name)
+            location:location_id(id, code, name)
         `);
 
     if (filters.status) {
@@ -252,7 +252,7 @@ export const InventoryAPI = {
     const { data, error } = await supabase.from('inventory').select(`
             *,
             material:materials(id, code, name),
-            location:locations(id, code, name)
+            location:location_id(id, code, name)
         `).eq('id', id).single();
     if (error) throw error;
     return transformInventory(data);
@@ -262,7 +262,7 @@ export const InventoryAPI = {
     const { data, error } = await supabase.from('inventory').select(`
             *,
             material:materials(id, code, name),
-            location:locations(id, code, name)
+            location:location_id(id, code, name)
         `).eq('serial_number', serialNumber).single();
     if (error) throw error;
     return transformInventory(data);
@@ -272,7 +272,7 @@ export const InventoryAPI = {
     const { data, error } = await supabase.from('inventory').select(`
             *,
             material:materials(id, code, name),
-            location:locations(id, code, name)
+            location:location_id(id, code, name)
         `).eq('batch_number', batchNumber);
     if (error) throw error;
     return data.map(transformInventory);

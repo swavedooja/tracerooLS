@@ -36,6 +36,8 @@ import MaterialInventory from './components/LabelManagement/MaterialInventory'; 
 import PackingDashboard from './components/Packing/PackingDashboard';
 import AggregationStation from './components/Packing/AggregationStation';
 import PrintStation from './components/LabelManagement/Print/PrintStation';
+import TradeItemPrint from './components/LabelManagement/Print/TradeItemPrint';
+import LabelPreview from './components/LabelPreview';
 import MobileApp from './components/Mobile/MobileApp';
 
 
@@ -104,7 +106,7 @@ function NavBar({ onLogout }) {
       icon: Inventory2,
       stateKey: 'inventoryOpen',
       children: [
-        { label: 'Generate Label', icon: Print, path: '/labels/generate' },
+        { label: 'Generate Shipping Labels', icon: Print, path: '/labels/generate' },
         { label: 'Material Inventory', icon: Storage, path: '/label-management/material-inventory' },
       ]
     },
@@ -277,8 +279,16 @@ export default function App() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: isMobileWireframe ? '#f5f5f5' : 'inherit' }}>
-      <GlobalStyles styles={{ body: { scrollBehavior: 'smooth' } }} />
-      {!isMobileWireframe && <NavBar onLogout={() => setIsAuthenticated(false)} />}
+      <GlobalStyles styles={{ 
+        body: { scrollBehavior: 'smooth' },
+        '@media print': {
+          '.no-print': { display: 'none !important' },
+          '.only-print': { display: 'block !important' },
+          'header, footer, nav, .MuiDrawer-root': { display: 'none !important' },
+          'body': { margin: 0, padding: 0 }
+        }
+      }} />
+      {!isMobileWireframe && <NavBar className="no-print" onLogout={() => setIsAuthenticated(false)} />}
       <Container
         maxWidth={isMobileWireframe ? false : "xl"}
         sx={{
@@ -307,6 +317,7 @@ export default function App() {
           <Route path="/label-templates" element={<LabelDashboard />} />
           <Route path="/label-templates/*" element={<LabelDashboard />} />
           <Route path="/labels/generate" element={<PrintStation />} />
+          <Route path="/labels/trade-print" element={<TradeItemPrint />} />
           <Route path="/print/:hierarchyId" element={<PrintStation />} />
           <Route path="/inventory/register" element={<Registration />} />
           <Route path="/inventory/serials" element={<SerialGeneration />} />
@@ -320,7 +331,7 @@ export default function App() {
           <Route path="/mobile-wireframe" element={<MobileApp />} />
         </Routes>
       </Container>
-      {!isMobileWireframe && <Footer />}
+      {!isMobileWireframe && <Footer className="no-print" />}
     </Box>
   );
 }

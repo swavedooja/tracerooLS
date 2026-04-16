@@ -90,7 +90,7 @@ export default function MaterialInventory() {
         if (selectedIds.length === 0) return;
         // Collect full objects for the selected IDs to pass to print station
         const selectedItems = inventory.filter(i => selectedIds.includes(i.id));
-        navigate('/labels/generate', { state: { preSelectedItems: selectedItems } });
+        navigate('/labels/trade-print', { state: { preSelectedItems: selectedItems } });
     };
 
     // Derived Data for Menus

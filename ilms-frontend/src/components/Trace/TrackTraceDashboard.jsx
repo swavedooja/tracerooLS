@@ -520,6 +520,10 @@ export default function TrackTraceDashboard() {
     const [selectedType, setSelectedType] = useState(null);
     const [expanded, setExpanded] = useState({});
     const [breadcrumbs, setBreadcrumbs] = useState([]);
+    useEffect(() => {
+        // Auto-load demo data on mount
+        handleLoadDemo();
+    }, []);
 
     const handleLoadDemo = () => {
         setLoading(true);
@@ -571,38 +575,22 @@ export default function TrackTraceDashboard() {
                     </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', gap: 2 }}>
-                    <Button
-                        variant="outlined"
-                        startIcon={<PlayArrow />}
-                        onClick={handleLoadDemo}
-                        disabled={loading}
-                    >
-                        {data ? 'Reload Demo Data' : 'Load Demo Data'}
-                    </Button>
+                    {/* Manual button removed for auto-load flow */}
                 </Box>
             </Box>
 
             {loading && <LinearProgress sx={{ mb: 2 }} />}
 
-            {!data ? (
-                <Paper
-                    variant="outlined"
-                    sx={{
-                        p: 6,
-                        textAlign: 'center',
-                        background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.05), rgba(66, 165, 245, 0.05))'
-                    }}
-                >
-                    <LocalShipping sx={{ fontSize: 80, color: 'primary.light', mb: 2 }} />
-                    <Typography variant="h5" gutterBottom>Welcome to Track & Trace</Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3 }}>
-                        Click "Load Demo Data" to explore the interactive dashboard with sample shipments, locations, and materials
-                    </Typography>
-                    <Button variant="contained" size="large" startIcon={<PlayArrow />} onClick={handleLoadDemo}>
-                        Load Demo Data
-                    </Button>
-                </Paper>
-            ) : (
+            {!data && loading ? (
+                 <Box sx={{ p: 10, textAlign: 'center' }}>
+                     <LinearProgress sx={{ maxWidth: 400, mx: 'auto', mb: 2 }} />
+                     <Typography color="text.secondary">Initializing Supply Chain Data...</Typography>
+                 </Box>
+             ) : !data ? (
+                 <Paper sx={{ p: 4, textAlign: 'center' }}>
+                     <Typography color="text.secondary">Failed to initialize data.</Typography>
+                 </Paper>
+             ) : (
                 <>
                     {/* Stats Row */}
                     <Grid container spacing={2} sx={{ mb: 3 }}>

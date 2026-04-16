@@ -191,12 +191,24 @@ export default function Dashboard() {
     },
   ];
 
-  const stats = [
-    { icon: LocalShipping, value: 15420, label: 'Total Shipments', color: '#1976D2' },
-    { icon: CheckCircle, value: 98, label: 'On-Time Delivery %', color: '#4CAF50' },
-    { icon: Inventory, value: 8750, label: 'Active Materials', color: '#FF9800' },
-    { icon: LocationOn, value: 142, label: 'Distribution Centers', color: '#9C27B0' },
-  ];
+  const [stats, setStats] = useState([
+    { icon: LocalShipping, value: 0, label: 'Total Shipments', color: '#1976D2' },
+    { icon: CheckCircle, value: 0, label: 'On-Time Delivery %', color: '#4CAF50' },
+    { icon: Inventory, value: 0, label: 'Active Materials', color: '#FF9800' },
+    { icon: LocationOn, value: 0, label: 'Distribution Centers', color: '#9C27B0' },
+  ]);
+
+  useEffect(() => {
+    // Simulate fetching relevant metrics
+    setTimeout(() => {
+        setStats([
+            { icon: LocalShipping, value: 12840, label: 'Total Shipments', color: '#1976D2' },
+            { icon: CheckCircle, value: 99.2, label: 'On-Time Delivery %', color: '#4CAF50' },
+            { icon: Inventory, value: 4520, label: 'Active Materials', color: '#FF9800' },
+            { icon: LocationOn, value: 18, label: 'Active Zones', color: '#9C27B0' },
+        ]);
+    }, 800);
+  }, []);
 
   const steps = [
     { icon: QrCode2, title: 'Scan & Register', description: 'Register materials with QR/barcode scanning' },
@@ -266,7 +278,7 @@ export default function Dashboard() {
                     fontWeight: 800,
                   }}
                 >
-                  Track & Trace
+                  Operations Dashboard
                   <br />
                   <Box
                     component="span"
