@@ -14,19 +14,28 @@ const COLORS = {
 /* ── Connector Arrow between levels ─────────────── */
 function Connector({ start, end }) {
   const points = useMemo(() => [new THREE.Vector3(...start), new THREE.Vector3(...end)], [start, end]);
-  const dir = useMemo(() => new THREE.Vector3().subVectors(new THREE.Vector3(...end), new THREE.Vector3(...start)).normalize(), [start, end]);
   
+  // Calculate arrow head points (simple chevron)
+  const arrowHead = useMemo(() => {
+    const headSize = 0.15;
+    const p1 = new THREE.Vector3(end[0] - headSize, end[1] + headSize * 0.5, end[2]);
+    const p2 = new THREE.Vector3(...end);
+    const p3 = new THREE.Vector3(end[0] - headSize, end[1] - headSize * 0.5, end[2]);
+    return [p1, p2, p3];
+  }, [end]);
+
   return (
     <group>
+      {/* Main Line */}
       <line>
         <bufferGeometry attach="geometry" setFromPoints={points} />
         <lineBasicMaterial attach="material" color="#94a3b8" linewidth={2} />
       </line>
-      {/* Arrow head */}
-      <mesh position={[end[0] - 0.1, end[1], end[2]]} rotation={[0, 0, -Math.PI / 2]}>
-        <coneGeometry args={[0.08, 0.2, 16]} />
-        <meshStandardMaterial color="#94a3b8" />
-      </mesh>
+      {/* 2D-style Arrow Head (Chevron) */}
+      <line>
+        <bufferGeometry attach="geometry" setFromPoints={arrowHead} />
+        <lineBasicMaterial attach="material" color="#94a3b8" linewidth={2} />
+      </line>
     </group>
   );
 }
