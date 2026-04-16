@@ -93,7 +93,7 @@ const ManualEntry = ({ onBack }) => {
                                 <Paper sx={{ p: 2, textAlign: 'left', mb: 4, bgcolor: '#f8f9fa' }}>
                                     <GridRow label="External UID" value={formData.uid} />
                                     <GridRow label="Product" value={formData.productName} />
-                                    <GridRow label="Traceroo ID" value="TRA-992-K2L" />
+                                    <GridRow label="SLS ID" value="TRA-992-K2L" />
                                 </Paper>
                                 <Button variant="contained" fullWidth onClick={() => setIsSubmitted(false)} sx={{ borderRadius: 2, mb: 2 }}>
                                     Register Another

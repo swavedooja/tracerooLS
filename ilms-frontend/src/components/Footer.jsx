@@ -121,7 +121,7 @@ export default function Footer() {
                     <LocalShipping sx={{ fontSize: 24 }} />
                   </Box>
                   <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                    TraceRoo
+                    SLS Material Management
                   </Typography>
                 </Stack>
                 <Typography variant="body2" sx={{ opacity: 0.8, lineHeight: 1.7 }}>
@@ -236,7 +236,7 @@ export default function Footer() {
                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
                   <Email sx={{ fontSize: 20, mt: 0.3, opacity: 0.8 }} />
                   <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                    support@traceroo-ilms.com
+                    support@sls-mm.com
                   </Typography>
                 </Stack>
                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
@@ -272,7 +272,7 @@ export default function Footer() {
             spacing={2}
           >
             <Typography variant="body2" sx={{ opacity: 0.7 }}>
-              © {new Date().getFullYear()} TraceRoo. All rights reserved. Powered by DOPS | Last Updated: Dec 11, 2025, 05:16 IST
+              © {new Date().getFullYear()} SLS Material Management. All rights reserved. Powered by DOPS | Last Updated: Dec 11, 2025, 05:16 IST
             </Typography>
             <Stack direction="row" spacing={3}>
               <Link

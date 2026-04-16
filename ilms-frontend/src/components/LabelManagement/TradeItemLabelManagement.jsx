@@ -3,6 +3,7 @@ import { Box, Button, Grid, Paper, TextField, Typography, List, ListItem, ListIt
 import { Add, Delete, Edit, Link as LinkIcon, Print, LocalDrink, Inventory, Layers, LocalShipping, WineBar, Spa, ViewColumn } from '@mui/icons-material';
 import { PackagingAPI } from '../../services/APIService';
 import LabelDesigner from '../LabelDesigner/LabelDesigner';
+import Packaging3DView from '../Packaging3DView';
 import { useNavigate } from 'react-router-dom';
 
 const getIconForType = (typeStr) => {
@@ -15,6 +16,14 @@ const getIconForType = (typeStr) => {
     if (t.includes('soap') || t.includes('cream')) return <Spa fontSize="small" />;
     if (t.includes('shampoo') || t.includes('tube')) return <ViewColumn fontSize="small" />;
     return <Inventory fontSize="small" />;
+};
+
+const inferShape = (name) => {
+    const n = (name || '').toLowerCase();
+    if (n.includes('pallet')) return 'Pallet';
+    if (n.includes('carton') || n.includes('case') || n.includes('master')) return 'Carton';
+    if (n.includes('bottle') || n.includes('syrup') || n.includes('tube') || n.includes('sachet') || n.includes('vial')) return 'Bottle';
+    return 'Box';
 };
 
 const FMCG_PACKAGING_DATA = [
@@ -287,48 +296,16 @@ export default function TradeItemLabelManagement() {
                                 ))}
                             </List>
 
-                            {/* Graphical Representation Here */}
+                            {/* 3D Graphical Representation */}
                             {levels.length > 0 && (
-                                <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                                    <Typography variant="subtitle2" sx={{ mb: 2 }}>Packaging Hierarchy Visualization</Typography>
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', overflowX: 'auto', pb: 1, pt: 1 }}>
-                                        {[...levels].sort((a, b) => a.level_order - b.level_order).reduce((innerContent, level, idx, arr) => {
-                                            const depthIndex = arr.length - 1 - idx;
-                                            const bgColors = ['#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#42a5f5', '#2196f3', '#1e88e5'];
-                                            return (
-                                                <Paper elevation={3} sx={{ 
-                                                    p: 2, 
-                                                    m: 1, 
-                                                    bgcolor: bgColors[depthIndex % bgColors.length], 
-                                                    border: '2px dashed #1565c0', 
-                                                    borderRadius: 2,
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    width: innerContent ? 'calc(100% - 16px)' : 'auto',
-                                                    minWidth: 180,
-                                                    transition: 'transform 0.2s',
-                                                    '&:hover': { transform: 'scale(1.02)' }
-                                                }}>
-                                                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                        <Typography variant="caption" fontWeight="bold" color="primary.dark">Level {level.level_order}</Typography>
-                                                        {level.capacity > 1 && (
-                                                            <Box sx={{ bgcolor: 'rgba(255,255,255,0.7)', px: 1, py: 0.5, borderRadius: 1 }}>
-                                                                <Typography variant="caption" fontWeight="bold" color="primary.dark">Cap: {level.capacity}</Typography>
-                                                            </Box>
-                                                        )}
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: innerContent ? 3 : 1 }}>
-                                                        {getIconForType(level.level_name)}
-                                                        <Typography variant="body1" fontWeight="bold" color="primary.dark" sx={{ textAlign: 'center', mt: 0.5 }}>
-                                                            {level.level_name.split(' (')[0]}
-                                                        </Typography>
-                                                    </Box>
-                                                    {innerContent}
-                                                </Paper>
-                                            )
-                                        }, null)}
-                                    </Box>
+                                <Box sx={{ mt: 3, borderRadius: 1, overflow: 'hidden' }}>
+                                    <Typography variant="subtitle2" sx={{ mb: 1, px: 1 }}>Packaging Hierarchy – 3D View</Typography>
+                                    <Packaging3DView levels={[...levels].sort((a, b) => a.level_order - b.level_order).map(l => ({
+                                        levelIndex: l.level_order,
+                                        levelName: l.level_name?.split(' (')[0] || `Level ${l.level_order}`,
+                                        containedQuantity: l.capacity || l.contained_quantity || 1,
+                                        shapeType: inferShape(l.level_name),
+                                    }))} />
                                 </Box>
                             )}
 

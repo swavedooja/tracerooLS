@@ -22,9 +22,11 @@ import AddIcon from '@mui/icons-material/Add';
 import PreviewIcon from '@mui/icons-material/Preview';
 import SaveIcon from '@mui/icons-material/Save';
 import PackagingTreeView from './PackagingTreeView';
+import Packaging3DView from './Packaging3DView';
 import LabelPreview from './LabelPreview';
 import { PackagingAPI } from '../services/APIService';
 
+const SHAPE_TYPES = ['Box', 'Carton', 'Bottle', 'Pallet'];
 const ID_TECHS = ['BARCODE', 'RFID', 'BLE'];
 const defaultLevel = (idx) => ({
   levelIndex: idx,
@@ -36,6 +38,7 @@ const defaultLevel = (idx) => ({
   defaultLabelCopies: 1,
   isReturnable: false,
   isSerialized: false,
+  shapeType: idx === 1 ? 'Bottle' : 'Box',
 });
 
 export default function PackagingHierarchyEditor() {
@@ -46,6 +49,7 @@ export default function PackagingHierarchyEditor() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [savedId, setSavedId] = useState(null);
   const [toast, setToast] = useState({ open: false, msg: '', sev: 'success' });
+  const [viewMode, setViewMode] = useState('3D');
 
   const addLevel = () => {
     const idx = levels.length + 1;
@@ -146,6 +150,10 @@ export default function PackagingHierarchyEditor() {
                   <Grid item xs={12} sm={4}><TextField select size="small" label="ID Tech" fullWidth value={l.idTech} onChange={(e)=> updateLevel(i, { idTech: e.target.value })}>
                     {ID_TECHS.map((t)=> <MenuItem key={t} value={t}>{t}</MenuItem>)}
                   </TextField></Grid>
+                  
+                  <Grid item xs={12} sm={4}><TextField select size="small" label="Shape Type" fullWidth value={l.shapeType || 'Box'} onChange={(e)=> updateLevel(i, { shapeType: e.target.value })}>
+                    {SHAPE_TYPES.map((t)=> <MenuItem key={t} value={t}>{t}</MenuItem>)}
+                  </TextField></Grid>
                   {l.idTech === 'BARCODE' && (
                     <Grid item xs={12} sm={4}><TextField size="small" label="Barcode Type" fullWidth value={l.barcodeType || ''} onChange={(e)=> updateLevel(i, { barcodeType: e.target.value })} /></Grid>
                   )}
@@ -180,8 +188,16 @@ export default function PackagingHierarchyEditor() {
         </Grid>
 
         <Grid item xs={12} md={7}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>Visualization</Typography>
-          <PackagingTreeView levels={levels} />
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Visualization</Typography>
+            <Box>
+              <Button size="small" variant={viewMode === '2D' ? 'contained' : 'outlined'} onClick={() => setViewMode('2D')} sx={{ mr: 1 }}>2D Tree</Button>
+              <Button size="small" variant={viewMode === '3D' ? 'contained' : 'outlined'} onClick={() => setViewMode('3D')}>3D View</Button>
+            </Box>
+          </Box>
+          <Paper variant="outlined" sx={{ overflow: 'hidden' }}>
+            {viewMode === '3D' ? <Packaging3DView levels={levels} /> : <PackagingTreeView levels={levels} />}
+          </Paper>
         </Grid>
       </Grid>
 

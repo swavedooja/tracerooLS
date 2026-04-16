@@ -172,7 +172,7 @@ const MobileApp = () => {
 
 const HomeModule = ({ onNavigate }) => (
     <Box sx={{ p: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: '#1a1a1a' }}>Traceroo Mobile</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, color: '#1a1a1a' }}>SLS Material Management</Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>Standard Android ILMS Terminal</Typography>
 
         <Stack spacing={2}>
@@ -192,7 +192,7 @@ const HomeModule = ({ onNavigate }) => (
             />
             <MenuButton
                 title="Manual Entry"
-                subtitle="Register non-Traceroo UIDs"
+                subtitle="Register non-SLS UIDs"
                 icon={<Inventory />}
                 color="#ED6C02"
                 onClick={() => onNavigate('manual')}

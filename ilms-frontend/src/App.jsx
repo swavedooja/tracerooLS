@@ -212,7 +212,7 @@ function NavBar({ onLogout }) {
               <LocalShipping sx={{ fontSize: 24, color: 'primary.dark' }} />
             </Box>
             <Typography variant="h6" sx={{ fontWeight: 700, display: { xs: 'none', sm: 'block' } }}>
-              TraceRoo ILMS
+              SLS Material Management
             </Typography>
           </Box>
 
@@ -253,7 +253,7 @@ function NavBar({ onLogout }) {
         <Box sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
             {/* Logo placeholder */}
-            <Typography variant="h6" fontWeight="bold">TraceRoo</Typography>
+            <Typography variant="h6" fontWeight="bold">SLS Material Management</Typography>
           </Box>
           <List>
             {menuItems.map((item, index) => renderMenuItem(item, index))}

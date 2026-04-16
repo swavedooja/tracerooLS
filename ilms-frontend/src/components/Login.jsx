@@ -153,7 +153,7 @@ export default function Login({ onLogin }) {
                   textAlign: 'center',
                 }}
               >
-                TraceRoo ILMS
+                SLS Material Management
               </Typography>
             </motion.div>
 
