@@ -2,7 +2,7 @@
   "name": "ilms-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://swavedooja.github.io/tracerooNew",
+  "homepage": "https://swavedooja.github.io/tracerooLS",
   "scripts": {
     "start": "webpack serve --mode development",
     "build": "webpack --mode production",
