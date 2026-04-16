@@ -30,16 +30,16 @@ export const LOCATIONS = {
     plants: [
         {
             id: 'LOC-PLANT-001',
-            code: 'MUM-PLANT',
-            name: 'Mumbai Manufacturing Plant',
+            code: 'MUM-PHARMA',
+            name: 'Strategic Pharma Site - Mumbai',
             type: 'MANUFACTURING',
             gln: '8901234500001',
             address: 'Andheri East, Mumbai, MH 400069',
             zones: [
                 {
                     id: 'ZONE-001',
-                    code: 'PROD-A',
-                    name: 'Production Line A',
+                    code: 'LINE-01',
+                    name: 'Sterile Production Line 01',
                     racks: [
                         {
                             id: 'RACK-001', code: 'R1', name: 'Rack 1', bins: [
@@ -47,19 +47,13 @@ export const LOCATIONS = {
                                 { id: 'BIN-002', code: 'R1-A2', name: 'Bin A2', itemCount: 36 },
                                 { id: 'BIN-003', code: 'R1-B1', name: 'Bin B1', itemCount: 24 }
                             ]
-                        },
-                        {
-                            id: 'RACK-002', code: 'R2', name: 'Rack 2', bins: [
-                                { id: 'BIN-004', code: 'R2-A1', name: 'Bin A1', itemCount: 60 },
-                                { id: 'BIN-005', code: 'R2-B1', name: 'Bin B1', itemCount: 12 }
-                            ]
                         }
                     ]
                 },
                 {
                     id: 'ZONE-002',
-                    code: 'QC-AREA',
-                    name: 'Quality Control Area',
+                    code: 'QC-LAB',
+                    name: 'Pharma Quality Control Lab',
                     racks: [
                         {
                             id: 'RACK-003', code: 'QC-R1', name: 'QC Rack 1', bins: [
@@ -72,8 +66,8 @@ export const LOCATIONS = {
         },
         {
             id: 'LOC-WH-001',
-            code: 'DEL-DC',
-            name: 'Delhi Distribution Center',
+            code: 'DEL-CC-HUB',
+            name: 'National Cold Chain Hub - Delhi',
             type: 'WAREHOUSE',
             gln: '8901234500002',
             address: 'Gurgaon, Haryana 122001',
@@ -81,10 +75,10 @@ export const LOCATIONS = {
                 {
                     id: 'ZONE-003',
                     code: 'RECV',
-                    name: 'Receiving Area',
+                    name: 'Sterile Receiving Area',
                     racks: [
                         {
-                            id: 'RACK-004', code: 'DOCK-1', name: 'Dock 1', bins: [
+                            id: 'RACK-004', code: 'DOCK-1', name: 'Cold Dock 1', bins: [
                                 { id: 'BIN-007', code: 'D1-STG', name: 'Staging', itemCount: 120 }
                             ]
                         }
@@ -93,17 +87,11 @@ export const LOCATIONS = {
                 {
                     id: 'ZONE-004',
                     code: 'STORAGE',
-                    name: 'Main Storage',
+                    name: 'Deep Freezer Storage',
                     racks: [
                         {
-                            id: 'RACK-005', code: 'S-A1', name: 'Storage A1', bins: [
-                                { id: 'BIN-008', code: 'SA1-01', name: 'Bin 01', itemCount: 240 },
-                                { id: 'BIN-009', code: 'SA1-02', name: 'Bin 02', itemCount: 180 }
-                            ]
-                        },
-                        {
-                            id: 'RACK-006', code: 'S-B1', name: 'Storage B1', bins: [
-                                { id: 'BIN-010', code: 'SB1-01', name: 'Bin 01', itemCount: 96 }
+                            id: 'RACK-005', code: 'S-A1', name: 'Freezer Rack A1', bins: [
+                                { id: 'BIN-008', code: 'SA1-01', name: 'Bin 01', itemCount: 240 }
                             ]
                         }
                     ]
@@ -112,15 +100,15 @@ export const LOCATIONS = {
         },
         {
             id: 'LOC-WH-002',
-            code: 'BLR-HUB',
-            name: 'Bangalore Hub',
+            code: 'BLR-DIST',
+            name: 'Bangalore Regional Hub',
             type: 'WAREHOUSE',
             gln: '8901234500003',
             address: 'Electronic City, Bangalore 560100'
         },
         {
             id: 'LOC-CUST-001',
-            code: 'RETAIL-01',
+            code: 'MEDPLUS-01',
             name: 'MedPlus Pharmacy - Indiranagar',
             type: 'CUSTOMER',
             gln: '8901234500010',
@@ -134,83 +122,66 @@ export const MATERIALS = {
     finishedGoods: [
         {
             id: 'MAT-FG-001',
-            code: 'SHAMPOO-100ML',
-            name: 'Herbal Shampoo Bottle 100ML',
+            code: 'AMOXICILLIN-250MG',
+            name: 'Amoxicillin 250mg Capsules',
             gtin: generateGTIN('890123456', '001'),
             type: 'FINISHED_GOODS',
-            category: 'Personal Care',
-            uom: 'EA',
+            category: 'Antibiotics',
+            uom: 'BTR',
             shelfLife: 730, // days
             subAssemblies: [
                 {
                     id: 'MAT-SA-001',
-                    code: 'BOTTLE-ASSY',
-                    name: 'Bottle Assembly',
+                    code: 'BLISTER-PACK',
+                    name: 'Alu-Alu Blister Pack',
                     qtyPerParent: 1,
                     components: [
                         {
                             id: 'MAT-COMP-001',
-                            code: 'BOTTLE-100ML',
-                            name: 'PET Bottle 100ML',
+                            code: 'ALU-FOIL',
+                            name: 'Forming Aluminum Foil',
                             qtyPerParent: 1,
                             rawMaterials: [
-                                { id: 'RM-001', code: 'PET-RESIN', name: 'PET Resin', vendor: 'Reliance Industries', country: 'India', qtyPerParent: 0.015, uom: 'KG' }
-                            ]
-                        },
-                        {
-                            id: 'MAT-COMP-002',
-                            code: 'CAP-FLIP',
-                            name: 'Flip Cap',
-                            qtyPerParent: 1,
-                            rawMaterials: [
-                                { id: 'RM-002', code: 'PP-RESIN', name: 'PP Resin', vendor: 'IOCL', country: 'India', qtyPerParent: 0.005, uom: 'KG' }
+                                { id: 'RM-001', code: 'ALU-8011', name: 'Aluminum Alloy 8011', vendor: 'Hindalco', country: 'India', qtyPerParent: 0.05, uom: 'KG' }
                             ]
                         }
                     ]
                 },
                 {
                     id: 'MAT-SA-002',
-                    code: 'LIQUID-FILL',
-                    name: 'Liquid Content',
-                    qtyPerParent: 100,
-                    uom: 'ML',
+                    code: 'POWDER-MIX',
+                    name: 'Active Powder Blend',
+                    qtyPerParent: 250,
+                    uom: 'MG',
                     components: [
                         {
                             id: 'MAT-COMP-003',
-                            code: 'SHAMPOO-BASE',
-                            name: 'Shampoo Base Formula',
-                            qtyPerParent: 95,
+                            code: 'AMOX-API',
+                            name: 'Amoxicillin Trihydrate API',
+                            qtyPerParent: 250,
                             rawMaterials: [
-                                { id: 'RM-003', code: 'SLS', name: 'Sodium Lauryl Sulfate', vendor: 'Galaxy Surfactants', country: 'India', qtyPerParent: 15, uom: 'ML' },
-                                { id: 'RM-004', code: 'AQUA', name: 'Purified Water', vendor: 'Internal', country: 'India', qtyPerParent: 70, uom: 'ML' },
-                                { id: 'RM-005', code: 'GLYCERIN', name: 'Vegetable Glycerin', vendor: 'Godrej Industries', country: 'India', qtyPerParent: 5, uom: 'ML' }
-                            ]
-                        },
-                        {
-                            id: 'MAT-COMP-004',
-                            code: 'FRAGRANCE',
-                            name: 'Herbal Fragrance',
-                            qtyPerParent: 5,
-                            rawMaterials: [
-                                { id: 'RM-006', code: 'FRAG-HERB', name: 'Herbal Essence Oil', vendor: 'IFF', country: 'USA', qtyPerParent: 5, uom: 'ML' }
+                                { id: 'RM-003', code: 'API-AMOX', name: 'Amoxicillin Trihydrate', vendor: 'Aurobindo Pharma', country: 'India', qtyPerParent: 250, uom: 'MG' },
+                                { id: 'RM-005', code: 'MICRO-CEL', name: 'Microcrystalline Cellulose', vendor: 'DuPont', country: 'USA', qtyPerParent: 20, uom: 'MG' }
                             ]
                         }
                     ]
                 }
             ],
             packaging: {
-                primary: { type: 'ITEM', label: 'Unit Bottle', capacity: 1 },
-                secondary: { type: 'CASE', label: 'Carton Box', capacity: 12 },
-                tertiary: { type: 'PALLET', label: 'Pallet', capacity: 48 }
+                primary: { type: 'ITEM', label: 'Blister Pack', capacity: 1 },
+                secondary: { type: 'CASE', label: 'Unit Box (10 Packs)', capacity: 10 },
+                tertiary: { type: 'PALLET', label: 'Master Pallet', capacity: 100 }
             }
         },
         {
             id: 'MAT-FG-002',
-            code: 'CREAM-50G',
-            name: 'Moisturizing Cream 50G',
+            code: 'VAX-CV-10ML',
+            name: 'COVID-19 mRNA Vaccine Vial',
             gtin: generateGTIN('890123456', '002'),
             type: 'FINISHED_GOODS',
-            category: 'Skin Care'
+            category: 'Vaccines',
+            uom: 'VIAL',
+            shelfLife: 180
         }
     ]
 };

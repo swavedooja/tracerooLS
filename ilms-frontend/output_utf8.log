@@ -1,0 +1,60 @@
+﻿Connected to PostgreSQL database
+Cleaning up existing data...
+Seeding Locations...
+Seeding Master Definitions...
+Seeding Packaging Hierarchy...
+node : Error seeding 
+data: error: invalid 
+input syntax for type 
+uuid: "h1111111-e89b-12d3-
+a456-426614174000"
+At line:1 char:1
++ node 
+seed-data-lifescience.js 
+> output.log 2>&1
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (E  
+  rror seeding d...6-42   
+ 6614174000":String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+    at C:\Swapnil\2026 Pro
+jects\Traceroo2027\ilms-fr
+ontend\node_modules\pg\lib
+\client.js:631:17
+    at process.processTick
+sAndRejections (node:inter
+nal/process/task_queues:10
+5:5)
+    at async seedData 
+(C:\Swapnil\2026 Projects\
+Traceroo2027\ilms-frontend
+\seed-data-lifescience.js:
+100:5) {
+  length: 168,
+  severity: 'ERROR',
+  code: '22P02',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: 
+undefined,
+  internalQuery: 
+undefined,
+  where: "unnamed portal 
+parameter $1 = '...'",
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'uuid.c',
+  line: '138',
+  routine: 
+'string_to_uuid'
+}

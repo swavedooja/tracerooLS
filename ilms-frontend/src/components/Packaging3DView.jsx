@@ -11,15 +11,23 @@ const COLORS = {
   Pallet:  { base: '#8d6e63', glass: '#5d4037' },
 };
 
-/* ── Connector Line between levels ────────────────────── */
+/* ── Connector Arrow between levels ─────────────── */
 function Connector({ start, end }) {
   const points = useMemo(() => [new THREE.Vector3(...start), new THREE.Vector3(...end)], [start, end]);
+  const dir = useMemo(() => new THREE.Vector3().subVectors(new THREE.Vector3(...end), new THREE.Vector3(...start)).normalize(), [start, end]);
   
   return (
-    <line>
-      <bufferGeometry attach="geometry" setFromPoints={points} />
-      <lineBasicMaterial attach="material" color="#cbd5e1" linewidth={1} dashSize={0.2} gapSize={0.1} />
-    </line>
+    <group>
+      <line>
+        <bufferGeometry attach="geometry" setFromPoints={points} />
+        <lineBasicMaterial attach="material" color="#94a3b8" linewidth={2} />
+      </line>
+      {/* Arrow head */}
+      <mesh position={[end[0] - 0.1, end[1], end[2]]} rotation={[0, 0, -Math.PI / 2]}>
+        <coneGeometry args={[0.08, 0.2, 16]} />
+        <meshStandardMaterial color="#94a3b8" />
+      </mesh>
+    </group>
   );
 }
 
@@ -145,18 +153,26 @@ function Scene({ levels }) {
       const shapeType = lvl.shapeType || 'Box';
       const pal = COLORS[shapeType] || COLORS.Box;
       
-      // Normalized scaling: Bottle is slightly smaller, Pallet slightly larger
+      // Normalized scaling
       let baseScale = 1.0;
       if (shapeType === 'Bottle') baseScale = 0.85;
       if (shapeType === 'Pallet') baseScale = 1.3;
+
+      // Dynamic details: "Contains X [PreviousLevelName]"
+      let detailsText = 'Base Unit';
+      if (idx > 0) {
+        const prevLevel = levels[idx - 1];
+        const prevName = prevLevel.levelName || `Level ${prevLevel.levelOrder}`;
+        detailsText = `Contains ${lvl.containedQuantity} ${prevName}s`;
+      }
 
       return {
         key: idx,
         shapeType,
         scale: baseScale,
         color: pal.base,
-        label: lvl.levelName || `Level ${lvl.levelIndex}`,
-        details: lvl.containedQuantity > 1 ? `Contains ${lvl.containedQuantity} units` : 'Base Unit',
+        label: lvl.levelName || `Level ${lvl.levelOrder}`,
+        details: detailsText,
         position: [startX + idx * horizontalSpacing, 0, 0],
       };
     });
