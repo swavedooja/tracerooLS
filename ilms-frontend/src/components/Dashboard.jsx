@@ -25,6 +25,10 @@ import {
   QrCode2,
   Analytics,
   ArrowForward,
+  Error as ErrorIcon,
+  Notifications,
+  GppBad,
+  Label
 } from '@mui/icons-material';
 
 const AnimatedBox = motion(Box);
@@ -194,8 +198,8 @@ export default function Dashboard() {
   const [stats, setStats] = useState([
     { icon: LocalShipping, value: 0, label: 'Total Shipments', color: '#1976D2' },
     { icon: CheckCircle, value: 0, label: 'On-Time Delivery %', color: '#4CAF50' },
-    { icon: Inventory, value: 0, label: 'Active Materials', color: '#FF9800' },
-    { icon: LocationOn, value: 0, label: 'Distribution Centers', color: '#9C27B0' },
+    { icon: GppBad, value: 0, label: 'QC Failed', color: '#F44336' },
+    { icon: Notifications, value: 0, label: 'Active Alerts', color: '#FF9800' },
   ]);
 
   useEffect(() => {
@@ -204,8 +208,8 @@ export default function Dashboard() {
         setStats([
             { icon: LocalShipping, value: 12840, label: 'Total Shipments', color: '#1976D2' },
             { icon: CheckCircle, value: 99.2, label: 'On-Time Delivery %', color: '#4CAF50' },
-            { icon: Inventory, value: 4520, label: 'Active Materials', color: '#FF9800' },
-            { icon: LocationOn, value: 18, label: 'Active Zones', color: '#9C27B0' },
+            { icon: GppBad, value: 14, label: 'QC Failed', color: '#F44336' },
+            { icon: Notifications, value: 7, label: 'Active Alerts', color: '#FF9800' },
         ]);
     }, 800);
   }, []);
@@ -348,7 +352,59 @@ export default function Dashboard() {
         </Grid>
       </Container>
 
-      {/* Features Section */}
+      {/* Alerts & Recent Activity */}
+      <Container maxWidth="lg" sx={{ mb: 8 }}>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={6}>
+            <Box sx={{ p: 4, borderRadius: 4, border: '1px solid #fee2e2', bgcolor: '#fff5f5' }}>
+              <Typography variant="h6" fontWeight="bold" color="error.main" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ErrorIcon /> Alerts & Exceptions
+              </Typography>
+              <Stack spacing={2}>
+                {[
+                  { text: 'Temperature Deviation at Zone A', time: '10 mins ago', type: 'error' },
+                  { text: 'GPS Signal Lost - Truck MH-12-4242', time: '35 mins ago', type: 'warning' },
+                  { text: 'Packaging Seal Integrity Warning - Line 4', time: '1 hr ago', type: 'warning' },
+                  { text: 'Material Expiry Alert - Batch #7712', time: '2 hrs ago', type: 'error' },
+                ].map((alert, i) => (
+                  <Box key={i} sx={{ p: 2, bgcolor: 'white', borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #fee2e2' }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">{alert.text}</Typography>
+                      <Typography variant="caption" color="text.secondary">{alert.time}</Typography>
+                    </Box>
+                    <Chip size="small" label="VIEW" sx={{ fontSize: '0.6rem', fontWeight: 'bold' }} />
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Box sx={{ p: 4, borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Analytics color="primary" /> Recent Events
+              </Typography>
+              <Stack spacing={2.5}>
+                {[
+                  { event: 'Shipment #12840 Delivered', location: 'DC Singapore', time: '2 mins ago' },
+                  { event: 'New Batch #8812 Registered', location: 'Manufacturing Unit 4', time: '15 mins ago' },
+                  { event: 'Bulk Label Print Complete', location: 'Printing Station B', time: '45 mins ago' },
+                  { event: 'Material Transfer Initiated', location: 'Zone A to Zone D', time: '2 hrs ago' },
+                ].map((item, i) => (
+                  <Box key={i} sx={{ display: 'flex', gap: 2 }}>
+                    <Box sx={{ width: 8, height: 8, mt: 0.8, borderRadius: '50%', bgcolor: 'primary.main', flexShrink: 0 }} />
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">{item.event}</Typography>
+                      <Typography variant="caption" color="text.secondary">{item.location} • {item.time}</Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Stack>
+            </Box>
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* Labeling Performance Section */}
       <Container maxWidth="lg" sx={{ mb: 8 }}>
         <AnimatedBox
           initial={{ opacity: 0, y: 20 }}
@@ -358,17 +414,22 @@ export default function Dashboard() {
           sx={{ textAlign: 'center', mb: 5 }}
         >
           <Typography variant="h3" sx={{ mb: 1.5, fontWeight: 700, fontSize: '2rem' }}>
-            Powerful Features
+            Labeling Performance
           </Typography>
           <Typography variant="subtitle1" color="text.secondary" sx={{ maxWidth: 500, mx: 'auto' }}>
-            Everything you need to manage your logistics operations efficiently
+            Operational throughput and accuracy metrics for the current shift
           </Typography>
         </AnimatedBox>
 
         <Grid container spacing={3}>
-          {features.map((feature, index) => (
+          {[
+            { icon: Label, value: 85200, label: 'Trade Labels Pasted', color: '#1976D2' },
+            { icon: LocalShipping, value: 14350, label: 'Shipping Labels Pasted', color: '#4CAF50' },
+            { icon: CheckCircle, value: 99.8, label: 'Labeling Accuracy', suffix: '%', color: '#FF9800' },
+            { icon: QrCode2, value: 12, label: 'Active Printers', color: '#9C27B0' },
+          ].map((perf, index) => (
             <Grid item xs={12} sm={6} md={3} key={index}>
-              <FeatureCard {...feature} delay={index * 0.05} />
+               <StatCard {...perf} delay={index * 0.05} />
             </Grid>
           ))}
         </Grid>
