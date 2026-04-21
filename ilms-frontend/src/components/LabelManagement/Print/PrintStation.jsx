@@ -469,7 +469,7 @@ export default function ShippingLabelGenerator() {
                                                                     <Box>
                                                                         <Typography variant="overline" sx={{ fontWeight: 'bold', fontSize: 10, borderBottom: '1px solid #eee' }}>ILMS SHIPPING LABEL</Typography>
                                                                         <Typography variant="body2" sx={{ fontSize: 11, fontWeight: 'bold', mt: 1 }}>
-                                                                            {orderLines.find(l => l.id === lineId)?.material?.name}
+                                                                            {config.hierarchy?.name || 'Trade Item'}
                                                                         </Typography>
                                                                         <Typography variant="caption" sx={{ fontSize: 9 }}>
                                                                             LVL: {lvl.level_name} | QTY: {lvl.contained_quantity}
@@ -478,7 +478,7 @@ export default function ShippingLabelGenerator() {
                                                                     
                                                                     <Box sx={{ display: 'flex', justifyContent: 'center' }}>
                                                                         <Barcode 
-                                                                            value={`${lvl.level_code}-${1000 + i}`} 
+                                                                            value={lvl.level_code ? `${lvl.level_code}-${1000 + i}` : `SHP-${lvl.id}-${i}`} 
                                                                             width={1.2}
                                                                             height={40}
                                                                             fontSize={8}
@@ -487,7 +487,7 @@ export default function ShippingLabelGenerator() {
                                                                     
                                                                     <Box>
                                                                         <Typography variant="caption" sx={{ fontSize: 8, color: 'text.secondary' }}>
-                                                                            BATCH: 2024-X1 | SO: {selectedOrder?.order_number}
+                                                                            BATCH: 2024-X1 | SO: {selectedOrder?.order_number || 'INTERNAL'}
                                                                         </Typography>
                                                                     </Box>
                                                                </Paper>

@@ -35,17 +35,22 @@ export const LOCATIONS = {
             type: 'MANUFACTURING',
             gln: '8901234500001',
             address: 'Andheri East, Mumbai, MH 400069',
+            events: [
+                { id: 'LE-001', type: 'SITE_AUDIT_PASS', timestamp: daysAgo(90), location: 'MUM-PHARMA', user: 'WHO Inspector', notes: 'GMP standards met' },
+                { id: 'LE-002', type: 'LICENSE_RENEWED', timestamp: daysAgo(45), location: 'MUM-PHARMA', user: 'FDA System', notes: 'Valid until 2028' }
+            ],
             zones: [
                 {
                     id: 'ZONE-001',
                     code: 'LINE-01',
                     name: 'Sterile Production Line 01',
+                    type: 'ZONE',
                     racks: [
                         {
-                            id: 'RACK-001', code: 'R1', name: 'Rack 1', bins: [
-                                { id: 'BIN-001', code: 'R1-A1', name: 'Bin A1', itemCount: 48 },
-                                { id: 'BIN-002', code: 'R1-A2', name: 'Bin A2', itemCount: 36 },
-                                { id: 'BIN-003', code: 'R1-B1', name: 'Bin B1', itemCount: 24 }
+                            id: 'RACK-001', code: 'R1', name: 'Rack 1', type: 'RACK', bins: [
+                                { id: 'BIN-001', code: 'R1-A1', name: 'Bin A1', type: 'BIN', itemCount: 48 },
+                                { id: 'BIN-002', code: 'R1-A2', name: 'Bin A2', type: 'BIN', itemCount: 36 },
+                                { id: 'BIN-003', code: 'R1-B1', name: 'Bin B1', type: 'BIN', itemCount: 24 }
                             ]
                         }
                     ]
@@ -54,10 +59,11 @@ export const LOCATIONS = {
                     id: 'ZONE-002',
                     code: 'QC-LAB',
                     name: 'Pharma Quality Control Lab',
+                    type: 'ZONE',
                     racks: [
                         {
-                            id: 'RACK-003', code: 'QC-R1', name: 'QC Rack 1', bins: [
-                                { id: 'BIN-006', code: 'QC-HOLD', name: 'QC Hold', itemCount: 8 }
+                            id: 'RACK-003', code: 'QC-R1', name: 'QC Rack 1', type: 'RACK', bins: [
+                                { id: 'BIN-006', code: 'QC-HOLD', name: 'QC Hold', type: 'BIN', itemCount: 8 }
                             ]
                         }
                     ]
@@ -71,15 +77,19 @@ export const LOCATIONS = {
             type: 'WAREHOUSE',
             gln: '8901234500002',
             address: 'Gurgaon, Haryana 122001',
+            events: [
+                { id: 'LE-003', type: 'TEMP_CALIBRATION', timestamp: daysAgo(10), location: 'DEL-CC-HUB', user: 'Calibration Eng', notes: 'Freezer sensors +/- 0.1C' }
+            ],
             zones: [
                 {
                     id: 'ZONE-003',
                     code: 'RECV',
                     name: 'Sterile Receiving Area',
+                    type: 'ZONE',
                     racks: [
                         {
-                            id: 'RACK-004', code: 'DOCK-1', name: 'Cold Dock 1', bins: [
-                                { id: 'BIN-007', code: 'D1-STG', name: 'Staging', itemCount: 120 }
+                            id: 'RACK-004', code: 'DOCK-1', name: 'Cold Dock 1', type: 'RACK', bins: [
+                                { id: 'BIN-007', code: 'D1-STG', name: 'Staging', type: 'BIN', itemCount: 120 }
                             ]
                         }
                     ]
@@ -88,10 +98,11 @@ export const LOCATIONS = {
                     id: 'ZONE-004',
                     code: 'STORAGE',
                     name: 'Deep Freezer Storage',
+                    type: 'ZONE',
                     racks: [
                         {
-                            id: 'RACK-005', code: 'S-A1', name: 'Freezer Rack A1', bins: [
-                                { id: 'BIN-008', code: 'SA1-01', name: 'Bin 01', itemCount: 240 }
+                            id: 'RACK-005', code: 'S-A1', name: 'Freezer Rack A1', type: 'RACK', bins: [
+                                { id: 'BIN-008', code: 'SA1-01', name: 'Bin 01', type: 'BIN', itemCount: 240 }
                             ]
                         }
                     ]
@@ -104,7 +115,25 @@ export const LOCATIONS = {
             name: 'Bangalore Regional Hub',
             type: 'WAREHOUSE',
             gln: '8901234500003',
-            address: 'Electronic City, Bangalore 560100'
+            address: 'Electronic City, Bangalore 560100',
+            events: [
+                { id: 'LE-004', type: 'INVENTORY_SYNC', timestamp: hoursAgo(5), location: 'BLR-DIST', user: 'System', notes: 'Daily stock tally completed' }
+            ],
+            zones: [
+                {
+                    id: 'ZONE-BLR-01',
+                    code: 'COOL-01',
+                    name: 'Cold Storage Room 01',
+                    type: 'ZONE',
+                    racks: [
+                        {
+                            id: 'RACK-BLR-01', code: 'A1', name: 'Rack A1', type: 'RACK', bins: [
+                                { id: 'BIN-BLR-01', code: 'A1-01', name: 'Bin 01', type: 'BIN', itemCount: 150 }
+                            ]
+                        }
+                    ]
+                }
+            ]
         },
         {
             id: 'LOC-CUST-001',
@@ -112,7 +141,8 @@ export const LOCATIONS = {
             name: 'MedPlus Pharmacy - Indiranagar',
             type: 'CUSTOMER',
             gln: '8901234500010',
-            address: 'Indiranagar, Bangalore 560038'
+            address: 'Indiranagar, Bangalore 560038',
+            events: []
         }
     ]
 };
@@ -129,20 +159,27 @@ export const MATERIALS = {
             category: 'Antibiotics',
             uom: 'BTR',
             shelfLife: 730, // days
+            events: [
+                { id: 'ME-001', type: 'BOM_APPROVED', timestamp: daysAgo(365), location: 'Corporate HQ', user: 'Director of Ops', notes: 'v2.1 approved for production' },
+                { id: 'ME-002', type: 'GTIN_REGISTERED', timestamp: daysAgo(360), location: 'Regulatory Affairs', user: 'System', notes: 'Registered with GS1 India' },
+                { id: 'ME-003', type: 'COMPLIANCE_CLEAR', timestamp: daysAgo(358), location: 'Legal Dept', user: 'Counsel Ray', notes: 'Import/Export permit granted' }
+            ],
             subAssemblies: [
                 {
                     id: 'MAT-SA-001',
                     code: 'BLISTER-PACK',
                     name: 'Alu-Alu Blister Pack',
                     qtyPerParent: 1,
+                    type: 'SUB_ASSEMBLY',
                     components: [
                         {
                             id: 'MAT-COMP-001',
                             code: 'ALU-FOIL',
                             name: 'Forming Aluminum Foil',
                             qtyPerParent: 1,
+                            type: 'COMPONENT',
                             rawMaterials: [
-                                { id: 'RM-001', code: 'ALU-8011', name: 'Aluminum Alloy 8011', vendor: 'Hindalco', country: 'India', qtyPerParent: 0.05, uom: 'KG' }
+                                { id: 'RM-001', code: 'ALU-8011', name: 'Aluminum Alloy 8011', vendor: 'Hindalco', country: 'India', qtyPerParent: 0.05, uom: 'KG', type: 'RAW_MATERIAL' }
                             ]
                         }
                     ]
@@ -153,15 +190,17 @@ export const MATERIALS = {
                     name: 'Active Powder Blend',
                     qtyPerParent: 250,
                     uom: 'MG',
+                    type: 'SUB_ASSEMBLY',
                     components: [
                         {
                             id: 'MAT-COMP-003',
                             code: 'AMOX-API',
                             name: 'Amoxicillin Trihydrate API',
                             qtyPerParent: 250,
+                            type: 'COMPONENT',
                             rawMaterials: [
-                                { id: 'RM-003', code: 'API-AMOX', name: 'Amoxicillin Trihydrate', vendor: 'Aurobindo Pharma', country: 'India', qtyPerParent: 250, uom: 'MG' },
-                                { id: 'RM-005', code: 'MICRO-CEL', name: 'Microcrystalline Cellulose', vendor: 'DuPont', country: 'USA', qtyPerParent: 20, uom: 'MG' }
+                                { id: 'RM-003', code: 'API-AMOX', name: 'Amoxicillin Trihydrate', vendor: 'Aurobindo Pharma', country: 'India', qtyPerParent: 250, uom: 'MG', type: 'RAW_MATERIAL' },
+                                { id: 'RM-005', code: 'MICRO-CEL', name: 'Microcrystalline Cellulose', vendor: 'DuPont', country: 'USA', qtyPerParent: 20, uom: 'MG', type: 'RAW_MATERIAL' }
                             ]
                         }
                     ]
@@ -181,7 +220,10 @@ export const MATERIALS = {
             type: 'FINISHED_GOODS',
             category: 'Vaccines',
             uom: 'VIAL',
-            shelfLife: 180
+            shelfLife: 180,
+            events: [
+                { id: 'ME-004', type: 'R&D_STABILITY_PASS', timestamp: daysAgo(200), location: 'Global Vax Lab', user: 'Scientific Lead', notes: 'Stability at -80C verified' }
+            ]
         }
     ]
 };

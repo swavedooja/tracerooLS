@@ -10,6 +10,7 @@ import {
 } from '@mui/icons-material';
 import Barcode from 'react-barcode';
 import { jsPDF } from 'jspdf';
+import JsBarcode from 'jsbarcode'; // react-barcode brings this in
 
 export default function TradeItemPrint() {
     const location = useLocation();
@@ -24,6 +25,9 @@ export default function TradeItemPrint() {
             unit: 'mm',
             format: [100, 150] 
         });
+
+        // Create a temporary canvas for barcode generation
+        const canvas = document.createElement('canvas');
 
         items.forEach((item, index) => {
             if (index > 0) doc.addPage([100, 150], 'portrait');
@@ -61,15 +65,27 @@ export default function TradeItemPrint() {
             doc.setFont("helvetica", "bold");
             doc.text(`${item.serialNumber || item.id}`, 10, 85);
             
-            // Design representation
-            doc.setDrawColor(100);
-            doc.rect(15, 95, 70, 30);
-            doc.setFontSize(8);
-            doc.text("BARCODE DESIGN", 50, 112, { align: 'center' });
+            // Generate Barcode Image
+            try {
+                const serialValue = item.serialNumber || `SN-${item.id}`;
+                JsBarcode(canvas, serialValue, {
+                    format: "CODE128",
+                    width: 2,
+                    height: 100,
+                    displayValue: false
+                });
+                const barcodeData = canvas.toDataURL('image/png');
+                doc.addImage(barcodeData, 'PNG', 15, 95, 70, 30);
+            } catch (err) {
+                console.error("Barcode generation failed", err);
+                doc.rect(15, 95, 70, 30);
+                doc.text("BARCODE ERROR", 50, 112, { align: 'center' });
+            }
             
             doc.setFontSize(7);
             doc.setFont("helvetica", "normal");
             doc.text("AUTHORIZED FOR DISTRIBUTION", 50, 140, { align: 'center' });
+            doc.text(`${item.serialNumber || item.id}`, 50, 128, { align: 'center' });
         });
 
         doc.save(`Labels_TradeItems_${new Date().getTime()}.pdf`);
@@ -138,6 +154,7 @@ export default function TradeItemPrint() {
 
             {/* Labels Container */}
             <Box 
+                id="printable-area"
                 ref={printRef}
                 sx={{ 
                     display: 'flex', 
@@ -171,10 +188,11 @@ export default function TradeItemPrint() {
                             // Force page break in print
                             '@media print': {
                                 boxShadow: 'none',
-                                border: '1px solid #eee',
+                                border: '1px solid #000',
                                 pageBreakAfter: 'always',
-                                width: '100%',
-                                height: 'auto',
+                                width: '100mm',
+                                height: '150mm',
+                                margin: '0 auto',
                                 mb: 0
                             }
                         }}
@@ -232,39 +250,54 @@ export default function TradeItemPrint() {
             <style>
                 {`
                     @media print {
-                        body * {
-                            visibility: hidden;
+                        /* Force background colors and colors to print */
+                        * {
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
                         }
-                        #root, #root * {
-                            visibility: hidden;
+                        
+                        /* Hide everything but the printable area */
+                        body {
+                            visibility: hidden !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
                         }
+                        
+                        #root {
+                            display: none !important;
+                        }
+                        
+                        #printable-area {
+                            visibility: visible !important;
+                            display: block !important;
+                            position: absolute !important;
+                            left: 0 !important;
+                            top: 0 !important;
+                            width: 100% !important;
+                            margin: 0 !important;
+                            padding: 0 !important;
+                        }
+                        
+                        #printable-area * {
+                            visibility: visible !important;
+                        }
+
+                        /* Ensure clean page breaks */
+                        div[class*="MuiPaper-root"] {
+                            page-break-after: always !important;
+                            break-after: page !important;
+                            margin-bottom: 0 !important;
+                            box-shadow: none !important;
+                        }
+
                         .no-print {
                             display: none !important;
                         }
-                        /* Selectively show the print container */
-                        [ref="printRef"], [ref="printRef"] * {
-                            visibility: visible;
-                        }
-                        /* Actually, easier to just target the specific container and its children */
-                        div[class*="MuiBox-root"][ref] {
-                            visibility: visible;
-                        }
-                        /* Best way to handle MUI with standard window.print() */
-                        body {
-                            background: white !important;
-                        }
-                    }
 
-                    /* Dedicated print-specific class logic */
-                    @page {
-                        size: auto;
-                        margin: 0mm;
-                    }
-                    
-                    @media print {
-                        .no-print { display: none !important; }
-                        /* Ensure the labels are visible */
-                        path, rect, text { fill: black !important; stroke: black !important; }
+                        @page {
+                            size: auto;
+                            margin: 5mm;
+                        }
                     }
                 `}
             </style>

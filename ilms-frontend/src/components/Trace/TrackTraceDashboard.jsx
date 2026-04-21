@@ -380,16 +380,37 @@ const DetailPanel = ({ selected, type }) => {
             <Tabs value={detailTab} onChange={(e, v) => setDetailTab(v)} sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tab label="Info" sx={{ minWidth: 60 }} />
                 <Tab label="Timeline" sx={{ minWidth: 60 }} />
-                {(selected.pallets || selected.cases || selected.items) && <Tab label="Contents" sx={{ minWidth: 60 }} />}
+                {(selected.pallets || selected.cases || selected.items ||
+                  selected.zones || selected.racks || selected.bins ||
+                  selected.subAssemblies || selected.components || selected.rawMaterials) && (
+                    <Tab label="Hierarchy" sx={{ minWidth: 60 }} />
+                )}
             </Tabs>
 
             {/* Tab Content */}
             <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
                 {detailTab === 0 && (
                     <Box>
+                        {/* Container/Item specific */}
                         {selected.sscc && <InfoRow label="SSCC (AI 00)" value={selected.sscc} mono />}
                         {selected.gtin && <InfoRow label="GTIN (AI 01)" value={selected.gtin} mono />}
                         {selected.batchId && <InfoRow label="Batch/Lot (AI 10)" value={selected.batchId} mono />}
+                        
+                        {/* Location specific */}
+                        {selected.gln && <InfoRow label="GLN" value={selected.gln} mono />}
+                        {selected.address && <InfoRow label="Address" value={selected.address} />}
+                        {selected.zones && <InfoRow label="Zones Count" value={selected.zones.length} />}
+                        {selected.racks && <InfoRow label="Racks Count" value={selected.racks.length} />}
+                        {selected.bins && <InfoRow label="Bins Count" value={selected.bins.length} />}
+
+                        {/* Material specific */}
+                        {selected.category && <InfoRow label="Category" value={selected.category} />}
+                        {selected.uom && <InfoRow label="Unit of Measure" value={selected.uom} />}
+                        {selected.shelfLife && <InfoRow label="Shelf Life" value={`${selected.shelfLife} Days`} />}
+                        {selected.qtyPerParent && <InfoRow label="Quantity per Parent" value={selected.qtyPerParent} />}
+
+                        {/* Shared/General */}
+                        {selected.type && <InfoRow label="Type" value={selected.type} />}
                         {selected.mfgDate && <InfoRow label="Mfg Date (AI 11)" value={new Date(selected.mfgDate).toLocaleDateString()} />}
                         {selected.expiryDate && <InfoRow label="Expiry (AI 17)" value={new Date(selected.expiryDate).toLocaleDateString()} />}
                         {selected.qcStatus && <InfoRow label="QC Status" value={selected.qcStatus} />}
@@ -399,13 +420,14 @@ const DetailPanel = ({ selected, type }) => {
                         {selected.vehicleNumber && <InfoRow label="Vehicle" value={selected.vehicleNumber} />}
                         {selected.weight && <InfoRow label="Weight" value={selected.weight} />}
                         {selected.dimensions && <InfoRow label="Dimensions" value={selected.dimensions} />}
-                        {selected.itemCount && <InfoRow label="Item Count" value={selected.itemCount} />}
+                        {selected.itemCount && <InfoRow label="Total Items" value={selected.itemCount} />}
                         {selected.caseCount && <InfoRow label="Case Count" value={selected.caseCount} />}
-                        {selected.createdAt && <InfoRow label="Created" value={new Date(selected.createdAt).toLocaleString()} />}
+                        {selected.createdAt && <InfoRow label="Created At" value={new Date(selected.createdAt).toLocaleString()} />}
+                        
                         {selected.material && (
                             <>
                                 <Divider sx={{ my: 2 }} />
-                                <Typography variant="subtitle2" gutterBottom>Material Info</Typography>
+                                <Typography variant="subtitle2" gutterBottom>Linked Material Info</Typography>
                                 <InfoRow label="Material" value={selected.material.name} />
                                 <InfoRow label="Category" value={selected.material.category} />
                             </>
@@ -468,32 +490,34 @@ const DetailPanel = ({ selected, type }) => {
                             <Table size="small">
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Serial</TableCell>
-                                        <TableCell>Status</TableCell>
-                                        <TableCell align="right">Count</TableCell>
+                                        <TableCell>{selected.zones ? 'Zone / Area' : selected.racks ? 'Rack' : selected.bins ? 'Bin' : 'Name / Serial'}</TableCell>
+                                        <TableCell>Type / Status</TableCell>
+                                        <TableCell align="right">{selected.qtyPerParent ? 'Qty' : 'Total Count'}</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {(selected.pallets || selected.cases || selected.items || []).slice(0, 20).map((child) => (
-                                        <TableRow key={child.id} hover>
+                                    {(selected.pallets || selected.cases || selected.items || 
+                                      selected.zones || selected.racks || selected.bins ||
+                                      selected.subAssemblies || selected.components || selected.rawMaterials || []).slice(0, 20).map((child, cidx) => (
+                                        <TableRow key={child.id || cidx} hover>
                                             <TableCell>
-                                                <Typography variant="body2" fontFamily="monospace">
-                                                    {child.serial || child.id}
+                                                <Typography variant="body2" fontFamily={child.serial ? 'monospace' : 'inherit'}>
+                                                    {child.name || child.code || child.serial || child.id}
                                                 </Typography>
                                             </TableCell>
                                             <TableCell>
                                                 <Chip
-                                                    label={child.status}
+                                                    label={child.type || child.status}
                                                     size="small"
                                                     sx={{
                                                         height: 20,
-                                                        bgcolor: STATUS_COLORS[child.status]?.bg,
-                                                        color: STATUS_COLORS[child.status]?.color
+                                                        bgcolor: STATUS_COLORS[child.status]?.bg || 'grey.100',
+                                                        color: STATUS_COLORS[child.status]?.color || 'text.primary'
                                                     }}
                                                 />
                                             </TableCell>
                                             <TableCell align="right">
-                                                {child.caseCount || child.itemCount || child.items?.length || '-'}
+                                                {child.qtyPerParent || child.caseCount || child.itemCount || child.items?.length || '-'}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -719,28 +743,42 @@ export default function TrackTraceDashboard() {
                                             {/* Quick Info Cards */}
                                             <Grid container spacing={2} sx={{ mb: 2 }}>
                                                 <Grid item xs={4}>
-                                                    <Card variant="outlined" sx={{ textAlign: 'center', p: 1.5 }}>
-                                                        <Typography variant="caption" color="text.secondary">Status</Typography>
-                                                        <Chip
-                                                            label={selected.status || 'N/A'}
-                                                            sx={{
-                                                                mt: 0.5,
-                                                                bgcolor: STATUS_COLORS[selected.status]?.bg,
-                                                                color: STATUS_COLORS[selected.status]?.color
-                                                            }}
-                                                        />
+                                                    <Card variant="outlined" sx={{ textAlign: 'center', p: 1.5, height: '100%' }}>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {selectedType === 'LOCATION' ? 'GLN' : selectedType === 'MATERIAL' ? 'GTIN' : 'Status'}
+                                                        </Typography>
+                                                        {selectedType === 'LOCATION' || selectedType === 'MATERIAL' ? (
+                                                            <Typography variant="body2" fontWeight="bold" noWrap sx={{ mt: 0.5, fontSize: 11, fontFamily: 'monospace' }}>
+                                                                {selected.gln || selected.gtin || 'N/A'}
+                                                            </Typography>
+                                                        ) : (
+                                                            <Chip
+                                                                label={selected.status || 'N/A'}
+                                                                size="small"
+                                                                sx={{
+                                                                    mt: 0.5,
+                                                                    bgcolor: STATUS_COLORS[selected.status]?.bg,
+                                                                    color: STATUS_COLORS[selected.status]?.color
+                                                                }}
+                                                            />
+                                                        )}
                                                     </Card>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Card variant="outlined" sx={{ textAlign: 'center', p: 1.5 }}>
-                                                        <Typography variant="caption" color="text.secondary">Items</Typography>
+                                                    <Card variant="outlined" sx={{ textAlign: 'center', p: 1.5, height: '100%' }}>
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {selected.zones ? 'Zones' : selected.racks ? 'Racks' : selected.bins ? 'Bins' : 
+                                                             selected.subAssemblies ? 'Components' : 'Items'}
+                                                        </Typography>
                                                         <Typography variant="h6" fontWeight="bold" color="primary">
-                                                            {selected.itemCount || selected.caseCount || selected.items?.length || '-'}
+                                                            {selected.zones?.length || selected.racks?.length || selected.bins?.length || 
+                                                             selected.subAssemblies?.length || selected.components?.length || selected.rawMaterials?.length || 
+                                                             selected.itemCount || selected.caseCount || selected.items?.length || '-'}
                                                         </Typography>
                                                     </Card>
                                                 </Grid>
                                                 <Grid item xs={4}>
-                                                    <Card variant="outlined" sx={{ textAlign: 'center', p: 1.5 }}>
+                                                    <Card variant="outlined" sx={{ textAlign: 'center', p: 1.5, height: '100%' }}>
                                                         <Typography variant="caption" color="text.secondary">Events</Typography>
                                                         <Typography variant="h6" fontWeight="bold" color="secondary">
                                                             {selected.events?.length || 0}
@@ -750,49 +788,56 @@ export default function TrackTraceDashboard() {
                                             </Grid>
 
                                             {/* Children Table */}
-                                            {(selected.pallets || selected.cases || selected.items) && (
+                                            {(selected.pallets || selected.cases || selected.items ||
+                                              selected.zones || selected.racks || selected.bins ||
+                                              selected.subAssemblies || selected.components || selected.rawMaterials) && (
                                                 <TableContainer>
                                                     <Table size="small" stickyHeader>
                                                         <TableHead>
                                                             <TableRow>
-                                                                <TableCell>Serial / ID</TableCell>
-                                                                <TableCell>Type</TableCell>
-                                                                <TableCell>Status</TableCell>
-                                                                <TableCell align="right">Count</TableCell>
+                                                                <TableCell>{selected.zones ? 'Zone' : selected.racks ? 'Rack' : selected.bins ? 'Bin' : 
+                                                                           selected.subAssemblies || selected.components ? 'BOM Name' : 'Serial / ID'}</TableCell>
+                                                                <TableCell>Type / Category</TableCell>
+                                                                <TableCell>Status / UOM</TableCell>
+                                                                <TableCell align="right">Count / Qty</TableCell>
                                                             </TableRow>
                                                         </TableHead>
                                                         <TableBody>
-                                                            {(selected.pallets || selected.cases || selected.items || []).map((child) => (
+                                                            {(selected.pallets || selected.cases || selected.items || 
+                                                              selected.zones || selected.racks || selected.bins ||
+                                                              selected.subAssemblies || selected.components || selected.rawMaterials || []).map((child, cidx) => (
                                                                 <TableRow
-                                                                    key={child.id}
+                                                                    key={child.id || cidx}
                                                                     hover
                                                                     onClick={() => handleSelect(child, child.type || (child.cases ? 'PALLET' : child.items ? 'CASE' : 'ITEM'))}
                                                                     sx={{ cursor: 'pointer' }}
                                                                 >
                                                                     <TableCell>
-                                                                        <Typography variant="body2" fontFamily="monospace">
-                                                                            {child.serial || child.id}
+                                                                        <Typography variant="body2" fontFamily={child.serial ? 'monospace' : 'inherit'} fontWeight={child.serial ? 800 : 500}>
+                                                                            {child.name || child.code || child.serial || child.id}
                                                                         </Typography>
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         <Chip
-                                                                            label={child.type || (child.cases ? 'PALLET' : child.items ? 'CASE' : 'ITEM')}
+                                                                            label={child.type || child.category || (child.cases ? 'PALLET' : child.items ? 'CASE' : 'ITEM')}
                                                                             size="small"
                                                                             variant="outlined"
                                                                         />
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         <Chip
-                                                                            label={child.status}
+                                                                            label={child.status || child.uom || 'OK'}
                                                                             size="small"
                                                                             sx={{
-                                                                                bgcolor: STATUS_COLORS[child.status]?.bg,
-                                                                                color: STATUS_COLORS[child.status]?.color
+                                                                                bgcolor: STATUS_COLORS[child.status]?.bg || 'grey.100',
+                                                                                color: STATUS_COLORS[child.status]?.color || 'text.primary'
                                                                             }}
                                                                         />
                                                                     </TableCell>
                                                                     <TableCell align="right">
-                                                                        {child.caseCount || child.itemCount || child.items?.length || '-'}
+                                                                        <Typography variant="body2" fontWeight="bold">
+                                                                            {child.qtyPerParent || child.caseCount || child.itemCount || child.items?.length || '-'}
+                                                                        </Typography>
                                                                     </TableCell>
                                                                 </TableRow>
                                                             ))}
