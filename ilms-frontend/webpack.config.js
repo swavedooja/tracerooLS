@@ -42,11 +42,13 @@ module.exports = (env, argv) => {
       new CopyPlugin({
         patterns: [
           { from: 'public/.nojekyll', to: '' },
+          { from: 'public/assets', to: 'assets', noErrorOnMissing: true },
         ],
       }),
       new webpack.DefinePlugin({
         'process.env.NODE_ENV': JSON.stringify(isProduction ? 'production' : 'development'),
         'process.env.REACT_APP_USE_MOCK': JSON.stringify(process.env.REACT_APP_USE_MOCK || 'false'),
+        'process.env.PUBLIC_URL': JSON.stringify(isProduction ? '/tracerooLS' : ''),
       }),
     ],
     devServer: {

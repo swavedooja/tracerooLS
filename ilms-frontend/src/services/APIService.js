@@ -1100,7 +1100,25 @@ export const OrdersAPI = {
 // --- Helpers ---
 
 const transformMaterial = (m) => {
-  const images = (m.material_image || []).map(img => ({ id: img.id, url: img.url, type: img.type }));
+  const publicUrl = process.env.PUBLIC_URL || '';
+  
+  const images = (m.material_image || []).map(img => {
+      let url = img.url;
+      // If it's a relative local path, ensure it has the correct prefix
+      if (url && !url.startsWith('http') && !url.startsWith('data:')) {
+          // If it starts with a slash, remove it for consistency
+          if (url.startsWith('/')) url = url.substring(1);
+          
+          // If the path is just a file name (like vaccine.png), assume it belongs in assets/products
+          if (!url.includes('/')) {
+              url = `assets/products/${url}`;
+          }
+          
+          url = `${publicUrl}/${url}`;
+      }
+      return { id: img.id, url, type: img.type };
+  });
+
   const mainImage = images.find(img => img.type === 'MAIN')?.url || images[0]?.url || 'https://via.placeholder.com/600x400?text=No+Image';
   
   return {
