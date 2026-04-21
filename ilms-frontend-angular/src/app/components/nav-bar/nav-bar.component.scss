@@ -1,0 +1,84 @@
+.app-bar {
+  background: linear-gradient(135deg, rgba(10, 25, 41, 0.95), rgba(25, 118, 210, 0.95));
+  backdrop-filter: blur(10px);
+  color: white;
+  z-index: 1000;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  gap: 12px;
+  margin-left: 12px;
+}
+
+.logo-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #FFFFFF, #90CAF9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0px 4px 12px rgba(255, 255, 255, 0.3);
+}
+
+.icon {
+  color: var(--primary-dark);
+}
+
+.app-title {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.sidenav-container {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  background: transparent;
+  pointer-events: none;
+}
+
+.sidenav-container > mat-sidenav {
+  pointer-events: auto;
+  width: 280px;
+  background: linear-gradient(180deg, #0A1929, #1976D2);
+  color: white;
+}
+
+.drawer-header {
+  padding: 24px;
+}
+
+.drawer-header h3 {
+  margin: 0;
+  font-weight: bold;
+}
+
+.active-link {
+  background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+::ng-deep .mat-mdc-list-item {
+  color: white !important;
+  border-radius: 8px !important;
+  margin: 0 16px 8px 16px !important;
+}
+
+::ng-deep .mat-mdc-list-item-icon {
+  color: white !important;
+}
+
+::ng-deep .mat-mdc-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}

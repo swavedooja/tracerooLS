@@ -1,0 +1,158 @@
+<div class="page-container">
+  <mat-grid-list cols="12" rowHeight="100%" gutterSize="16px">
+    <!-- Sidebar -->
+    <mat-grid-tile colspan="3">
+      <div class="sidebar-wrapper">
+        <div class="sidebar-header">
+          <span class="title">Shipping Hierarchies</span>
+          <button mat-icon-button (click)="openNewHierarchyDialog(newHierarchyDialog)">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+        
+        <div class="sidebar-filters">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput placeholder="Search hierarchies..." [(ngModel)]="searchQuery">
+          </mat-form-field>
+          <div class="filter-row">
+            <mat-form-field appearance="outline">
+              <mat-select [(ngModel)]="productFilter">
+                <mat-option value="All">All Products</mat-option>
+                <!-- Add more filters if needed -->
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-select [(ngModel)]="sortOrder">
+                <mat-option value="A-Z">A-Z</mat-option>
+                <mat-option value="Z-A">Z-A</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <mat-selection-list [multiple]="false" class="hierarchy-list">
+          <mat-list-option *ngFor="let h of filteredHierarchies; let i = index" 
+                           [selected]="selectedHierarchy?.id === h.id"
+                           (click)="selectHierarchy(h)">
+            <span class="index">{{i + 1}}.</span>
+            <span class="name">{{h.name}}</span>
+          </mat-list-option>
+        </mat-selection-list>
+      </div>
+    </mat-grid-tile>
+
+    <!-- Main Content -->
+    <mat-grid-tile colspan="9">
+      <div class="main-wrapper">
+        <ng-container *ngIf="selectedHierarchy; else noSelection">
+          <div class="main-header">
+            <h3>Levels for {{selectedHierarchy.name}}</h3>
+            <button mat-flat-button color="primary" (click)="openAddLevelDialog(addLevelDialog)">
+              <mat-icon>add</mat-icon> Add Level
+            </button>
+          </div>
+
+          <div class="levels-container">
+            <p *ngIf="levels.length === 0" class="empty-hint">
+              No levels defined. Add levels like "Pallet", "Container".
+            </p>
+            
+            <div class="level-item" *ngFor="let l of levels">
+              <div class="level-index">{{l.level_order}}</div>
+              <div class="level-details">
+                <div class="level-name">{{l.level_name}}</div>
+                <div class="level-sub">
+                  {{l.label_template ? 'Template: ' + l.label_template.name : 'No Label Template Linked'}}
+                </div>
+              </div>
+              <div class="level-actions">
+                <button mat-icon-button color="primary" matTooltip="Link Template / Design Label">
+                  <mat-icon>link</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="deleteLevel(l.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visualization -->
+          <div class="viz-section" *ngIf="levels.length > 0">
+            <div class="section-title">Packaging Hierarchy Visualization</div>
+            <div class="nesting-viz">
+              <div *ngFor="let level of getVisualizationData(); let i = index; let last = last" 
+                   class="viz-box" 
+                   [ngStyle]="{'background-color': 'rgba(30, 136, 229, ' + (0.1 + (i * 0.15)) + ')'}">
+                <div class="box-header">
+                  <span class="level-tag">Level {{level.level_order}}</span>
+                  <span class="cap-tag" *ngIf="level.capacity > 1">Cap: {{level.capacity}}</span>
+                </div>
+                <div class="box-body">
+                  <mat-icon>{{getIconForType(level.level_name)}}</mat-icon>
+                  <span class="viz-name">{{level.level_name}}</span>
+                </div>
+              </div>
+              <div class="viz-connector" *ngIf="!last"></div>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #noSelection>
+          <div class="placeholder">
+            <mat-icon>local_shipping</mat-icon>
+            <p>Select a Hierarchy to configure</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-grid-tile>
+  </mat-grid-list>
+</div>
+
+<!-- New Hierarchy Dialog -->
+<ng-template #newHierarchyDialog>
+  <h2 mat-dialog-title>New Shipping Hierarchy</h2>
+  <mat-dialog-content>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Base Trade Item Hierarchy</mat-label>
+      <mat-select [(ngModel)]="dialogForm.selectedBaseHierarchy">
+        <mat-option *ngFor="let h of baseHierarchies" [value]="h.id">{{h.name}}</mat-option>
+      </mat-select>
+      <mat-hint>Select a trade hierarchy to act as the base (Level 1) of your shipping structure.</mat-hint>
+    </mat-form-field>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-flat-button color="primary" [disabled]="!dialogForm.selectedBaseHierarchy" (click)="createHierarchy()">Create</button>
+  </mat-dialog-actions>
+</ng-template>
+
+<!-- Add Level Dialog -->
+<ng-template #addLevelDialog>
+  <h2 mat-dialog-title>Add Level</h2>
+  <mat-dialog-content>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Packaging Level</mat-label>
+      <mat-select [(ngModel)]="dialogForm.levelName">
+        <mat-option *ngFor="let pkg of FMCG_PACKAGING_DATA" [value]="pkg.name">
+          {{pkg.name}} ({{pkg.type}})
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>Order</mat-label>
+        <input matInput type="number" [(ngModel)]="dialogForm.levelOrder">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Capacity</mat-label>
+        <input matInput type="number" [(ngModel)]="dialogForm.levelCapacity">
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-flat-button color="primary" (click)="saveLevel()">Add</button>
+  </mat-dialog-actions>
+</ng-template>

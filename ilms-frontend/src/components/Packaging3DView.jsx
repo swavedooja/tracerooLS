@@ -56,9 +56,8 @@ function PackageShape({ shapeType, scale, color, label, details, position }) {
 
   useFrame((state) => {
     if (meshRef.current) {
-      // Subtle float and rotate
+      // Subtle float only, no rotation
       meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime + position[0]) * 0.05;
-      meshRef.current.rotation.y += 0.005;
     }
   });
 
@@ -158,19 +157,29 @@ function Scene({ levels }) {
   const startX = -((levels.length - 1) * horizontalSpacing) / 2;
 
   const shapes = useMemo(() => {
-    return levels.map((lvl, idx) => {
+    // Sort levels by order (1-based) to ensure left-to-right increment
+    const sortedLevels = [...levels].sort((a, b) => {
+      const orderA = a.levelOrder ?? a.levelIndex ?? 0;
+      const orderB = b.levelOrder ?? b.levelIndex ?? 0;
+      return orderA - orderB;
+    });
+
+    return sortedLevels.map((lvl, idx) => {
       const shapeType = lvl.shapeType || 'Box';
       const pal = COLORS[shapeType] || COLORS.Box;
       
-      // Normalized scaling
-      let baseScale = 1.0;
-      if (shapeType === 'Bottle') baseScale = 0.85;
-      if (shapeType === 'Pallet') baseScale = 1.3;
+      // Hierarchical scaling: lowest level is smallest
+      //idx=0 -> scale=0.6, idx=1 -> scale=1.0, idx=2 -> scale=1.4, idx=3 -> scale=1.8
+      const sizeMultiplier = 0.6 + idx * 0.4;
+      
+      let baseScale = 1.0 * sizeMultiplier;
+      if (shapeType === 'Bottle') baseScale = 0.85 * sizeMultiplier;
+      if (shapeType === 'Pallet') baseScale = 1.3 * sizeMultiplier;
 
       // Dynamic details: "Contains X [PreviousLevelName]"
       let detailsText = 'Base Unit';
       if (idx > 0) {
-        const prevLevel = levels[idx - 1];
+        const prevLevel = sortedLevels[idx - 1];
         const prevName = prevLevel.levelName || `Level ${prevLevel.levelOrder}`;
         detailsText = `Contains ${lvl.containedQuantity} ${prevName}s`;
       }
@@ -221,11 +230,9 @@ function Scene({ levels }) {
       
       <OrbitControls 
         makeDefault 
-        enablePan 
-        enableZoom 
-        minDistance={4} 
-        maxDistance={12}
-        maxPolarAngle={Math.PI / 2} 
+        enablePan={false} 
+        enableZoom={false} 
+        enableRotate={false}
       />
     </>
   );
@@ -290,7 +297,7 @@ export default function Packaging3DView({ levels = [] }) {
         fontFamily: 'Inter',
         pointerEvents: 'none',
       }}>
-        🖱 Rotate · ↕ Zoom
+        3D Visualization Only
       </div>
 
       <Canvas shadows camera={{ position: [0, 1.5, 7], fov: 35 }}>

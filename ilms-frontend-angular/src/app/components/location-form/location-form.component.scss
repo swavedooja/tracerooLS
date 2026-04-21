@@ -1,0 +1,72 @@
+.location-form-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.card-header {
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    .title { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1e293b; }
+    .code-chip { font-weight: bold; font-size: 11px; height: 22px; }
+  }
+
+  .header-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    .save-btn { border-radius: 8px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    .delete-btn { font-weight: 600; }
+  }
+}
+
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.6);
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  ::ng-deep .mat-mdc-tab-body-wrapper {
+    flex: 1;
+  }
+}
+
+.tab-content {
+  padding: 24px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+
+  .full-width { grid-column: 1 / -1; }
+}
+
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+}

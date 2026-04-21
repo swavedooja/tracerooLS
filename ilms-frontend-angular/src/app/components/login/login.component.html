@@ -1,0 +1,48 @@
+<div class="login-container">
+  <!-- Background Particles -->
+  <div *ngFor="let p of particles; let i = index" [ngStyle]="getParticleStyle(i)"></div>
+  <div class="grid-pattern"></div>
+
+  <div class="login-box mat-elevation-z24">
+    <div class="logo-stack">
+      <div class="logo-box pulse-anim">
+        <mat-icon class="logo-icon">local_shipping</mat-icon>
+      </div>
+      <h2 class="title slide-up-anim">SLS Material Management</h2>
+      <p class="subtitle fade-in-anim">Integrated Logistics Management System</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      <div *ngIf="error" class="error-alert fade-in-anim">
+        {{ error }}
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width slide-up-anim" style="animation-delay: 0.6s">
+        <mat-label>Username</mat-label>
+        <mat-icon matPrefix color="primary">person</mat-icon>
+        <input matInput formControlName="username">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width slide-up-anim" style="animation-delay: 0.7s">
+        <mat-label>Password</mat-label>
+        <mat-icon matPrefix color="primary">lock</mat-icon>
+        <input matInput [type]="showPassword ? 'text' : 'password'" formControlName="password">
+        <button mat-icon-button matSuffix type="button" (click)="togglePasswordVisibility()">
+          <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <button mat-flat-button color="primary" type="submit" class="submit-btn slide-up-anim" style="animation-delay: 0.8s">
+        Sign In
+      </button>
+
+      <p class="demo-creds fade-in-anim" style="animation-delay: 0.9s">
+        Demo Credentials: admin / admin123
+      </p>
+
+      <button mat-stroked-button color="primary" type="button" class="full-width fade-in-anim wireframe-btn" style="animation-delay: 1.0s">
+        Try Mobile App Wireframe
+      </button>
+    </form>
+  </div>
+</div>

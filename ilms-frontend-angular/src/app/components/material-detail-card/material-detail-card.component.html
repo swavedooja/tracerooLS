@@ -1,0 +1,83 @@
+<div class="material-detail-container">
+  <div class="grid-container">
+    <!-- Left Side: Visuals -->
+    <div class="visuals-section">
+      <div class="main-image-wrapper">
+        <img [src]="mainImage" [alt]="material?.materialName" class="main-image">
+      </div>
+      
+      <div class="thumbnail-stack" *ngIf="images.length > 0">
+        <div *ngFor="let img of images; let idx = index" class="thumbnail-wrapper">
+          <img [src]="img.url" class="thumbnail" [ngClass]="{'active': img.type === 'MAIN'}">
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side: Primary Info -->
+    <div class="info-section">
+      <div class="header-info">
+        <span class="type-badge">{{ material?.type || 'Standard Material' }}</span>
+        <h2>{{ material?.materialName || 'Unnamed Material' }}</h2>
+        <p class="description">{{ material?.description || 'No description provided for this Life Science asset.' }}</p>
+        
+        <div class="chips-stack">
+          <mat-chip-set>
+            <mat-chip *ngIf="material?.isBatchManaged" class="primary-chip">Batch Managed</mat-chip>
+            <mat-chip *ngIf="material?.isSerialized" class="secondary-chip">Serialized</mat-chip>
+            <mat-chip *ngIf="material?.isHazmat" class="error-chip">
+              <mat-icon matChipAvatar>warning</mat-icon>
+              Hazmat
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+
+      <mat-divider class="my-2"></mat-divider>
+
+      <div class="specs-section">
+        <h3 class="section-title"><mat-icon class="icon">info</mat-icon> Key Specifications</h3>
+        
+        <div class="specs-card mui-card">
+          <div class="detail-row">
+            <span class="label"><mat-icon>settings</mat-icon> Material Code</span>
+            <span class="value">{{ material?.materialCode || 'Not specified' }}</span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="detail-row">
+            <span class="label"><mat-icon>layers</mat-icon> Base UOM</span>
+            <span class="value">{{ material?.baseUOM || 'Not specified' }}</span>
+          </div>
+          <mat-divider></mat-divider>
+          <div class="detail-row">
+            <span class="label"><mat-icon>shopping_bag</mat-icon> Shelf Life</span>
+            <span class="value">{{ material?.shelfLifeDays ? material.shelfLifeDays + ' days' : 'Not specified' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="storage-section">
+        <h3 class="section-title"><mat-icon class="icon">thermostat</mat-icon> Storage & Handling</h3>
+        
+        <div class="storage-grid">
+          <div class="storage-card mui-card">
+            <div class="avatar temp-avatar"><mat-icon>thermostat</mat-icon></div>
+            <div class="text">
+              <span class="label">Temp Range</span>
+              <span class="value">
+                {{ material?.handlingParameter?.temperatureMin ? material.handlingParameter.temperatureMin + '°C - ' + material.handlingParameter.temperatureMax + '°C' : 'Ambient' }}
+              </span>
+            </div>
+          </div>
+          
+          <div class="storage-card mui-card">
+            <div class="avatar state-avatar"><mat-icon>water_drop</mat-icon></div>
+            <div class="text">
+              <span class="label">Physical State</span>
+              <span class="value">{{ material?.materialState || 'NA' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

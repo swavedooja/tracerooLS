@@ -32,8 +32,8 @@ import MaterialDetailCard from './MaterialDetailCard';
 
 const TYPES = ['Finished Goods', 'Raw Material', 'Packaging Material'];
 const STATES = ['Liquid', 'Solid', 'Gel', 'Powder'];
-const CLASSES = ['Bottles', 'Tubes', 'Jars', 'Cartons'];
-const GROUPS = ['Shampoo', 'Fairness Cream', 'Body Wash', 'Hand Sanitizer'];
+const CLASSES = ['Blister Packs', 'Vials', 'Syrup Bottles', 'Pre-filled Syringes', 'Cartons'];
+const GROUPS = ['Antibiotics', 'Vaccines', 'Analgesics', 'Oncology', 'Diabetes', 'Cardiac'];
 const STORAGE_TYPES = ['Ambient', 'Cool Storage', 'Cold Storage'];
 const PROCUREMENT_TYPES = ['Make To Stock', 'Make To Order', 'Purchase'];
 const VEHICLE_TYPES = ['Bulker', 'Tanker', 'Flatbed', 'Refrigerated Truck', 'Standard Container'];
@@ -144,22 +144,22 @@ export default function MaterialCreate() {
   const handleAutoFill = () => {
     const unique = Math.floor(Math.random() * 1000);
     setForm({
-      materialCode: `MAT-${unique}`,
-      materialName: `Auto Material ${unique}`,
-      description: 'Auto-generated material for testing',
-      packagingTypes: ['Global Packaging'],
+      materialCode: `LIF-${unique}`,
+      materialName: `Amoxicillin ${unique}mg`,
+      description: 'Life Science grade antibiotic material',
+      packagingTypes: ['Pharma Standard'],
       skus: [{ 
-         name: `SKU-${unique}-Base`, 
-         type: 'Bottle',
+         name: `SKU-${unique}`, 
+         type: 'Blister Pack',
          packagingMaterial: 'Carton',
-         quantity: 1,
-         length: 400, width: 300, height: 300, dimUom: 'MM', weight: 1.2, weightUom: 'KG'
+         quantity: 10,
+         length: 120, width: 80, height: 40, dimUom: 'MM', weight: 0.1, weightUom: 'KG'
       }],
-      countryOfOrigin: 'USA',
+      countryOfOrigin: 'Germany',
       type: TYPES[0],
       materialClass: CLASSES[0],
       materialGroup: GROUPS[0],
-      materialState: STATES[0],
+      materialState: STATES[1], // Solid
       baseUOM: 'EA',
       netWeightKg: 0.5,
       netWeightUom: 'KG',
@@ -187,14 +187,14 @@ export default function MaterialCreate() {
       isBatchManaged: true,
       isSerialized: false,
       handlingParameter: {
-        temperatureMin: 10,
-        temperatureMax: 25,
-        humidityMin: 30,
-        humidityMax: 60,
+        temperatureMin: 2,
+        temperatureMax: 8,
+        humidityMin: 20,
+        humidityMax: 50,
         hazardousClass: 'None',
-        epcFormat: 'URN',
-        envParameters: 'Keep Dry',
-        precautions: 'Handle with care',
+        epcFormat: 'SGTIN-96',
+        envParameters: 'Keep in Cold Chain',
+        precautions: 'Fragile Glass',
       },
     });
   };

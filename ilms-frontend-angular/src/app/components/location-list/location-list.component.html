@@ -1,0 +1,35 @@
+<div class="location-page-container">
+  <div class="page-header">
+    <h1 class="page-title">Location Master Data</h1>
+    <button mat-flat-button color="primary" (click)="createNew()">
+      <mat-icon>add</mat-icon> New Root Location
+    </button>
+  </div>
+
+  <div class="content-body">
+    <div class="tree-sidebar">
+      <mat-card class="sidebar-card">
+        <app-location-tree-view 
+          [key]="refreshTree" 
+          [selectedCode]="selectedCode" 
+          (select)="handleSelect($event)">
+        </app-location-tree-view>
+      </mat-card>
+    </div>
+
+    <div class="form-main">
+      <app-location-form 
+        *ngIf="selectedCode; else placeholder" 
+        [code]="selectedCode" 
+        (success)="handleSuccess()" 
+        (delete)="handleDelete()">
+      </app-location-form>
+      <ng-template #placeholder>
+        <mat-card class="placeholder-card">
+          <mat-icon class="placeholder-icon">location_on</mat-icon>
+          <p>Select a location from the tree or create a new one to view and edit details.</p>
+        </mat-card>
+      </ng-template>
+    </div>
+  </div>
+</div>

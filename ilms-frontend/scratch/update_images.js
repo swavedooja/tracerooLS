@@ -8,9 +8,9 @@ async function updateImages() {
         console.log('Connected');
 
         const updates = [
-            { code: 'TAB-AM-250MG', url: 'https://github.com/swavedooja/tracerooLS/blob/main/ilms-frontend/assets/products/amoxycillin.png?raw=true', file: 'amoxycillin.png' },
-            { code: 'VIAL-VC-10ML', url: 'https://github.com/swavedooja/tracerooLS/blob/main/ilms-frontend/assets/products/vaccine.png?raw=true', file: 'vaccine.png' },
-            { code: 'SYR-PC-100ML', url: 'https://github.com/swavedooja/tracerooLS/blob/main/ilms-frontend/assets/products/paracetamol.png?raw=true', file: 'paracetamol.png' }
+            { code: 'TAB-AM-250MG', url: '/assets/products/amoxycillin.png', file: 'amoxycillin.png' },
+            { code: 'VIAL-VC-10ML', url: '/assets/products/vaccine.png', file: 'vaccine.png' },
+            { code: 'SYR-PC-100ML', url: '/assets/products/paracetamol.png', file: 'paracetamol.png' }
         ];
 
         for (const u of updates) {

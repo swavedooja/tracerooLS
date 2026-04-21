@@ -31,7 +31,7 @@ const ID_TECHS = ['BARCODE', 'RFID', 'BLE'];
 const defaultLevel = (idx) => ({
   levelIndex: idx,
   levelCode: `L${idx}`,
-  levelName: idx === 1 ? 'ITEM' : `LEVEL ${idx}`,
+  levelName: idx === 1 ? 'Unit Pack' : `Level ${idx}`,
   containedQuantity: idx === 1 ? 1 : 0,
   idTech: 'BARCODE',
   barcodeType: 'EAN-13',

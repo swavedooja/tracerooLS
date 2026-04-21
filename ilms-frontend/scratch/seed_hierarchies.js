@@ -24,10 +24,16 @@ async function seedHierarchies() {
             );
             const hid = res.rows[0].id;
 
-            // Levels: Primary -> Carton -> Shipper
-            await client.query('INSERT INTO public.packaging_level (hierarchy_id, level_order, level_name, contained_quantity) VALUES ($1, $2, $3, $4)', [hid, 0, 'Primary Unit', 1]);
-            await client.query('INSERT INTO public.packaging_level (hierarchy_id, level_order, level_name, contained_quantity) VALUES ($1, $2, $3, $4)', [hid, 1, 'Standard Carton', 50]);
-            await client.query('INSERT INTO public.packaging_level (hierarchy_id, level_order, level_name, contained_quantity) VALUES ($1, $2, $3, $4)', [hid, 2, 'Master Shipper', 500]);
+            // Define specific labels based on material
+            let unitName = 'Selling Unit';
+            if (h.material === 'TAB-AM-250MG') unitName = 'Amoxicillin Tablet Strip';
+            if (h.material === 'SYR-PC-100ML') unitName = 'Insulin Glargine Cartridge';
+            if (h.material === 'VIAL-VC-10ML') unitName = 'mRNA Vaccine Vial';
+
+            // Levels: Unit Name -> Carton -> Shipper
+            await client.query('INSERT INTO public.packaging_level (hierarchy_id, level_order, level_name, contained_quantity) VALUES ($1, $2, $3, $4)', [hid, 1, unitName, 1]);
+            await client.query('INSERT INTO public.packaging_level (hierarchy_id, level_order, level_name, contained_quantity) VALUES ($1, $2, $3, $4)', [hid, 2, 'Standard Carton', 50]);
+            await client.query('INSERT INTO public.packaging_level (hierarchy_id, level_order, level_name, contained_quantity) VALUES ($1, $2, $3, $4)', [hid, 3, 'Master Shipper', 500]);
         }
 
         console.log('Hierarchies seeded successfully');

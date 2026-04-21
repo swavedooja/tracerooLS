@@ -47,8 +47,9 @@ import InventoryScanConfirm from './components/Inventory/InventoryScanConfirm';
 import PackingStation from './components/Inventory/PackingStation';
 import TrackTraceDashboard from './components/Trace/TrackTraceDashboard';
 import ChainTrackDashboard from './components/Trace/ChainTrackDashboard';
-import Dashboard from './components/Dashboard';
-import DashboardMetrics from './components/Dashboard/DashboardMetrics';
+import Dashboard from './components/Dashboard.jsx';
+import DashboardMetrics from './components/Dashboard/DashboardMetrics.jsx';
+import OrderLifecycleDashboard from './components/Dashboard/OrderLifecycleDashboard.jsx';
 import ShipmentCreate from './components/Shipping/ShipmentCreate';
 import Login from './components/Login';
 import Footer from './components/Footer';
@@ -68,7 +69,10 @@ import {
   ListAlt,
   Storage,
   Archive,
-  Print
+  Print,
+  PlayCircleOutline, ShoppingCart, Business, 
+  CalendarMonth, Edit, Calculate,
+  History as HistoryIcon
 } from '@mui/icons-material';
 
 const AnimatedBox = motion(Box);
@@ -87,6 +91,8 @@ function NavBar({ onLogout }) {
       stateKey: 'dashboardOpen',
       children: [
         { label: 'Operations', icon: Timeline, path: '/' },
+        { label: 'Order Lifecycle', icon: HistoryIcon, path: '/dashboard/order-lifecycle' },
+        { label: 'Track & Trace', icon: Timeline, path: '/trace' },
         // { label: 'Home', icon: DashboardIcon, path: '/dashboard/home' },
         // { label: 'ChainTrack', icon: Timeline, path: '/chaintrack' },
       ]
@@ -129,7 +135,6 @@ function NavBar({ onLogout }) {
     //   ]
     // },
     // { label: 'Shipping', icon: LocalShipping, path: '/shipping' },
-    { label: 'Track & Trace', icon: Timeline, path: '/trace' },
   ];
 
   const handleProfileClick = (event) => {
@@ -303,6 +308,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<DashboardMetrics />} />
           <Route path="/dashboard/home" element={<Dashboard />} />
+          <Route path="/dashboard/order-lifecycle" element={<OrderLifecycleDashboard />} />
           <Route path="/materials/new" element={<MaterialCreate />} />
           <Route path="/materials/:code" element={<MaterialForm />} />
           <Route path="/materials" element={<MaterialList />} />

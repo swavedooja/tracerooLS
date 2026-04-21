@@ -1,0 +1,352 @@
+<div *ngIf="loading" class="loading-overlay">
+  <mat-spinner></mat-spinner>
+</div>
+
+<mat-card class="create-material-card" *ngIf="!loading">
+  <div class="card-header">
+    <div class="header-left">
+      <button mat-icon-button (click)="router.navigate(['/materials'])"><mat-icon>arrow_back</mat-icon></button>
+      <h2 class="title">
+        {{ mode === 'create' ? 'Create Material' : (mode === 'view' ? 'Material Insight' : 'Refine Material') }}
+      </h2>
+      <mat-chip *ngIf="code" class="code-chip">{{code}}</mat-chip>
+    </div>
+    <div class="header-right">
+      <button mat-button color="accent" (click)="handleAutoFill()" *ngIf="mode === 'create'">
+        <mat-icon>auto_fix_high</mat-icon> Auto-Fill
+      </button>
+      <button mat-flat-button color="primary" (click)="switchMode('edit')" *ngIf="mode === 'view'">
+        <mat-icon>edit</mat-icon> Switch to Edit
+      </button>
+    </div>
+  </div>
+
+  <mat-stepper #stepper="matHorizontalStepper" [linear]="true" class="material-stepper">
+    <!-- Step 0: General -->
+    <mat-step [stepControl]="generalForm">
+      <ng-template matStepLabel>General</ng-template>
+      <form [formGroup]="generalForm" class="step-content">
+        <h3 class="section-title">General Information</h3>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Material Code</mat-label>
+            <input matInput formControlName="materialCode" [readonly]="mode !== 'create'" required>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Material Name</mat-label>
+            <input matInput formControlName="materialName" [readonly]="mode === 'view'" required>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" [readonly]="mode === 'view'" rows="2"></textarea>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Country of Origin</mat-label>
+            <input matInput formControlName="countryOfOrigin" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Material Type</mat-label>
+            <mat-select formControlName="type" [disabled]="mode === 'view'" required>
+              <mat-option *ngFor="let t of TYPES" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Material State</mat-label>
+            <mat-select formControlName="materialState" [disabled]="mode === 'view'">
+              <mat-option *ngFor="let t of STATES" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Material Class</mat-label>
+            <mat-select formControlName="materialClass" [disabled]="mode === 'view'" required>
+              <mat-option *ngFor="let t of CLASSES" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Material Group</mat-label>
+            <mat-select formControlName="materialGroup" [disabled]="mode === 'view'" required>
+              <mat-option *ngFor="let t of GROUPS" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="stepper-actions">
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Step 1: Dimensions & Weight -->
+    <mat-step [stepControl]="dimensionsForm">
+      <ng-template matStepLabel>Dimensions</ng-template>
+      <form [formGroup]="dimensionsForm" class="step-content">
+        <h3 class="section-title">Dimensions & Weight</h3>
+        <div class="form-grid">
+          <div class="grid-sub-heading full-width">Base Specification</div>
+          <mat-form-field appearance="outline">
+            <mat-label>Base UOM</mat-label>
+            <mat-select formControlName="baseUOM" [disabled]="mode === 'view'" required>
+              <mat-option *ngFor="let t of UOMS" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Net Weight</mat-label>
+            <input matInput type="number" formControlName="netWeightKg" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Weight UOM</mat-label>
+            <mat-select formControlName="netWeightUom" [disabled]="mode === 'view'">
+              <mat-option *ngFor="let t of UOMS" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="full-width"></div>
+          <mat-form-field appearance="outline">
+            <mat-label>Length (MM)</mat-label>
+            <input matInput type="number" formControlName="lengthMM" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Width (MM)</mat-label>
+            <input matInput type="number" formControlName="widthMM" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Height (MM)</mat-label>
+            <input matInput type="number" formControlName="heightMM" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Dim UOM</mat-label>
+            <mat-select formControlName="dimensionUom" [disabled]="mode === 'view'">
+              <mat-option value="MM">MM</mat-option>
+              <mat-option value="CM">CM</mat-option>
+              <mat-option value="IN">IN</mat-option>
+              <mat-option value="M">M</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="stepper-actions">
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Step 2: Storage & Handling -->
+    <mat-step [stepControl]="storageForm">
+      <ng-template matStepLabel>Storage</ng-template>
+      <form [formGroup]="storageForm" class="step-content">
+        <h3 class="section-title">Storage & Handling</h3>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Shelf Life (days)</mat-label>
+            <input matInput type="number" formControlName="shelfLifeDays" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Storage Type</mat-label>
+            <mat-select formControlName="storageType" [disabled]="mode === 'view'">
+              <mat-option *ngFor="let t of STORAGE_TYPES" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Procurement Type</mat-label>
+            <mat-select formControlName="procurementType" [disabled]="mode === 'view'">
+              <mat-option *ngFor="let t of PROCUREMENT_TYPES" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Vehicle Type</mat-label>
+            <mat-select formControlName="vehicleType" [disabled]="mode === 'view'">
+              <mat-option *ngFor="let t of VEHICLE_TYPES" [value]="t">{{t}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Temp Min (°C)</mat-label>
+            <input matInput type="number" formControlName="temperatureMin" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Temp Max (°C)</mat-label>
+            <input matInput type="number" formControlName="temperatureMax" [readonly]="mode === 'view'">
+          </mat-form-field>
+        </div>
+        <div class="stepper-actions">
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Step 3: Packaging -->
+    <mat-step [stepControl]="packagingForm">
+      <ng-template matStepLabel>Packaging</ng-template>
+      <form [formGroup]="packagingForm" class="step-content">
+        <h3 class="section-title">Packaging Settings</h3>
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Packaging Types</mat-label>
+            <mat-chip-grid #chipGrid [disabled]="mode === 'view'">
+                <mat-chip-row *ngFor="let type of packagingForm.get('packagingTypes')?.value" (removed)="packagingForm.get('packagingTypes')?.value.indexOf(type)">
+                    {{type}}
+                    <button matChipRemove *ngIf="mode !== 'view'"><mat-icon>cancel</mat-icon></button>
+                </mat-chip-row>
+                <input placeholder="New type..." [matChipInputFor]="chipGrid" [disabled]="mode === 'view'">
+            </mat-chip-grid>
+          </mat-form-field>
+
+          <div class="sku-header full-width">
+            <span>SKU & Packaging Configurations</span>
+            <button mat-button color="primary" type="button" (click)="addSku()" *ngIf="mode !== 'view'">
+              <mat-icon>add</mat-icon> Add Configuration
+            </button>
+          </div>
+
+          <div formArrayName="skus" class="full-width">
+            <div *ngFor="let sku of skus.controls; let i=index" [formGroupName]="i" class="sku-card mui-card">
+              <div class="sku-card-header">
+                <span>Configuration {{i+1}}</span>
+                <button mat-icon-button color="warn" (click)="removeSku(i)" *ngIf="mode !== 'view'">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+              <div class="form-grid">
+                <mat-form-field appearance="outline">
+                  <mat-label>SKU Name</mat-label>
+                  <input matInput formControlName="name" [readonly]="mode === 'view'">
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>SKU Type</mat-label>
+                  <mat-select formControlName="type" [disabled]="mode === 'view'">
+                    <mat-option *ngFor="let t of SKU_TYPE_OPTIONS" [value]="t">{{t}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Packaging Material</mat-label>
+                  <mat-select formControlName="packagingMaterial" [disabled]="mode === 'view'">
+                    <mat-option *ngFor="let t of PACKAGING_MATERIAL_OPTIONS" [value]="t">{{t}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline" style="width: 100px;">
+                  <mat-label>Qty</mat-label>
+                  <input matInput type="number" formControlName="quantity" [readonly]="mode === 'view'">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="stepper-actions">
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Step 4: Identifiers -->
+    <mat-step [stepControl]="identifiersForm">
+      <ng-template matStepLabel>Identifiers</ng-template>
+      <form [formGroup]="identifiersForm" class="step-content">
+        <h3 class="section-title">Identifiers</h3>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Material EAN/UPC</mat-label>
+            <input matInput formControlName="materialEANupc" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>UPC</mat-label>
+            <input matInput formControlName="upc" [readonly]="mode === 'view'">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>External ERP Code</mat-label>
+            <input matInput formControlName="externalERPCode" [readonly]="mode === 'view'">
+          </mat-form-field>
+        </div>
+        <div class="stepper-actions">
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Step 5: Images -->
+    <mat-step>
+      <ng-template matStepLabel>Images</ng-template>
+      <div class="step-content">
+        <h3 class="section-title"><mat-icon>image</mat-icon> Product Images</h3>
+        <p class="section-subtitle" *ngIf="mode !== 'view'">Upload images of the material. The first image will be set as the primary image.</p>
+        
+        <input type="file" #fileInput hidden accept="image/*" multiple (change)="handleImageUpload($event)">
+        <button mat-stroked-button color="primary" (click)="fileInput.click()" style="margin-bottom: 24px;" *ngIf="mode !== 'view'">
+          <mat-icon>cloud_upload</mat-icon> Upload Images
+        </button>
+
+        <div class="images-grid" *ngIf="images.length > 0; else noImages">
+          <mat-card *ngFor="let img of images; let i=index" class="image-card">
+            <div *ngIf="img.isPrimary" class="primary-tag">PRIMARY</div>
+            <img mat-card-image [src]="img.dataUrl" [alt]="img.name">
+            <mat-card-actions align="end" *ngIf="mode !== 'view'">
+              <button mat-icon-button (click)="setPrimaryImage(i)" [disabled]="img.isPrimary" matTooltip="Set as primary">
+                <mat-icon [color]="img.isPrimary ? 'primary' : ''">image</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="removeImage(i)" matTooltip="Remove">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+        <ng-template #noImages>
+          <div class="info-alert">No images available.</div>
+        </ng-template>
+
+        <div class="stepper-actions">
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 6: Flags -->
+    <mat-step [stepControl]="flagsForm">
+      <ng-template matStepLabel>Flags</ng-template>
+      <form [formGroup]="flagsForm" class="step-content">
+        <h3 class="section-title">Status & Special Flags</h3>
+        <div class="flags-grid">
+          <mat-checkbox formControlName="isPackaged" [disabled]="mode === 'view'">Packaged Material</mat-checkbox>
+          <mat-checkbox formControlName="isFragile" [disabled]="mode === 'view'">Fragile Material</mat-checkbox>
+          <mat-checkbox formControlName="isHighValue" [disabled]="mode === 'view'">High Value</mat-checkbox>
+          <mat-checkbox formControlName="isEnvSensitive" [disabled]="mode === 'view'">Environment Sensitive</mat-checkbox>
+          <mat-checkbox formControlName="isBatchManaged" [disabled]="mode === 'view'">Batch Material</mat-checkbox>
+          <mat-checkbox formControlName="isSerialized" [disabled]="mode === 'view'">Serialized</mat-checkbox>
+        </div>
+        <div class="stepper-actions">
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </form>
+    </mat-step>
+
+    <!-- Step 7: Review & Submit -->
+    <mat-step>
+      <ng-template matStepLabel>Review</ng-template>
+      <div class="step-content">
+        <h3 class="section-title">Review & Submit</h3>
+        <app-material-detail-card [material]="fullFormValue" [images]="images"></app-material-detail-card>
+        
+        <div class="stepper-actions">
+          <button mat-button matStepperPrevious>Back</button>
+          <div class="final-actions">
+            <button mat-button (click)="openPreview(previewTpl)">Preview</button>
+            <button mat-flat-button color="primary" (click)="submit()" [disabled]="saving" *ngIf="mode !== 'view'">
+              {{ saving ? 'Saving...' : (mode === 'create' ? 'Submit' : 'Update') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-step>
+  </mat-stepper>
+</mat-card>
+
+<!-- Preview Dialog Template -->
+<ng-template #previewTpl>
+  <h2 mat-dialog-title>Preview Material</h2>
+  <mat-dialog-content>
+    <app-material-detail-card [material]="fullFormValue" [images]="images"></app-material-detail-card>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Close</button>
+  </mat-dialog-actions>
+</ng-template>

@@ -374,7 +374,7 @@ export default function ShippingLabelGenerator() {
                 {activeStep === 2 && (
                     <Box sx={{ py: 3 }}>
                         <Grid container spacing={4}>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} md={6} className="no-print">
                                 <Paper variant="outlined" sx={{ p: 4, textAlign: 'center', height: '100%', borderRadius: 4, bgcolor: '#f8fafc' }}>
                                     <CheckCircle sx={{ fontSize: 64, color: 'success.main', mb: 2 }} />
                                     <Typography variant="h5" gutterBottom fontWeight="bold">Configuration Complete</Typography>
@@ -414,7 +414,7 @@ export default function ShippingLabelGenerator() {
                                     </Button>
                                 </Paper>
                             </Grid>
-                            <Grid item xs={12} md={6}>
+                            <Grid item xs={12} md={6} sx={{ '@media print': { width: '100%', maxWidth: '100%', flexBasis: '100%' } }}>
                                 <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }} className="no-print">FINAL PREVIEW</Typography>
                                 <Paper variant="outlined" sx={{ 
                                     overflow: 'hidden', 
@@ -436,60 +436,66 @@ export default function ShippingLabelGenerator() {
                                         {Object.entries(lineConfigs).map(([lineId, config]) => (
                                             <Box key={lineId} sx={{ mb: 4, '@media print': { mb: 0 } }}>
                                                 <Typography variant="overline" color="primary" className="no-print">{config.hierarchy?.name}</Typography>
-                                                {config.levels?.map(lvl => (
-                                                    <Box key={lvl.id} sx={{ 
-                                                        mb: 2, 
-                                                        transform: 'scale(0.8)', 
-                                                        transformOrigin: 'top left',
-                                                        '@media print': {
-                                                            transform: 'none',
-                                                            pageBreakAfter: 'always',
-                                                            mb: 0,
-                                                            display: 'flex',
-                                                            justifyContent: 'center',
-                                                            pt: 5
-                                                        }
-                                                    }}>
-                                                       <Box className="no-print" sx={{ mb: 1 }}>
-                                                            <Typography variant="caption" fontWeight="bold">{lvl.level_name}</Typography>
-                                                       </Box>
-                                                       {/* Render a small dummy label representation */}
-                                                       <Paper sx={{ 
-                                                            p: 2, 
-                                                            border: '1px solid #000', 
-                                                            width: 300, 
-                                                            height: 180,
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            justifyContent: 'space-between'
-                                                        }}>
-                                                            <Box>
-                                                                <Typography variant="overline" sx={{ fontWeight: 'bold', fontSize: 10, borderBottom: '1px solid #eee' }}>ILMS SHIPPING LABEL</Typography>
-                                                                <Typography variant="body2" sx={{ fontSize: 11, fontWeight: 'bold', mt: 1 }}>
-                                                                    {orderLines.find(l => l.id === lineId)?.material?.name}
-                                                                </Typography>
-                                                                <Typography variant="caption" sx={{ fontSize: 9 }}>
-                                                                    LVL: {lvl.level_name} | QTY: {lvl.contained_quantity}
-                                                                </Typography>
+                                                {config.levels?.map(lvl => {
+                                                     const count = config.counts[lvl.id] || 0;
+                                                     const labels = [];
+                                                     for (let i = 0; i < count; i++) {
+                                                         labels.push(
+                                                            <Box key={`${lvl.id}-${i}`} sx={{ 
+                                                                mb: 2, 
+                                                                transform: 'scale(0.8)', 
+                                                                transformOrigin: 'top left',
+                                                                '@media print': {
+                                                                    transform: 'none',
+                                                                    pageBreakAfter: 'always',
+                                                                    mb: 0,
+                                                                    display: 'flex',
+                                                                    justifyContent: 'center',
+                                                                    pt: 5
+                                                                }
+                                                            }}>
+                                                               <Box className="no-print" sx={{ mb: 1 }}>
+                                                                    <Typography variant="caption" fontWeight="bold">{lvl.level_name} ({i+1}/{count})</Typography>
+                                                               </Box>
+                                                               <Paper sx={{ 
+                                                                    p: 2, 
+                                                                    border: '1px solid #000', 
+                                                                    width: 300, 
+                                                                    height: 180,
+                                                                    display: 'flex',
+                                                                    flexDirection: 'column',
+                                                                    justifyContent: 'space-between'
+                                                                }}>
+                                                                    <Box>
+                                                                        <Typography variant="overline" sx={{ fontWeight: 'bold', fontSize: 10, borderBottom: '1px solid #eee' }}>ILMS SHIPPING LABEL</Typography>
+                                                                        <Typography variant="body2" sx={{ fontSize: 11, fontWeight: 'bold', mt: 1 }}>
+                                                                            {orderLines.find(l => l.id === lineId)?.material?.name}
+                                                                        </Typography>
+                                                                        <Typography variant="caption" sx={{ fontSize: 9 }}>
+                                                                            LVL: {lvl.level_name} | QTY: {lvl.contained_quantity}
+                                                                        </Typography>
+                                                                    </Box>
+                                                                    
+                                                                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                                                        <Barcode 
+                                                                            value={`${lvl.level_code}-${1000 + i}`} 
+                                                                            width={1.2}
+                                                                            height={40}
+                                                                            fontSize={8}
+                                                                        />
+                                                                    </Box>
+                                                                    
+                                                                    <Box>
+                                                                        <Typography variant="caption" sx={{ fontSize: 8, color: 'text.secondary' }}>
+                                                                            BATCH: 2024-X1 | SO: {selectedOrder?.order_number}
+                                                                        </Typography>
+                                                                    </Box>
+                                                               </Paper>
                                                             </Box>
-                                                            
-                                                            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                                                <Barcode 
-                                                                    value={`${lvl.level_code}-00${Math.floor(Math.random()*9)}`} 
-                                                                    width={1.2}
-                                                                    height={40}
-                                                                    fontSize={8}
-                                                                />
-                                                            </Box>
-                                                            
-                                                            <Box>
-                                                                <Typography variant="caption" sx={{ fontSize: 8, color: 'text.secondary' }}>
-                                                                    BATCH: 2024-X1 | SO: {selectedOrder?.order_number}
-                                                                </Typography>
-                                                            </Box>
-                                                       </Paper>
-                                                    </Box>
-                                                ))}
+                                                         );
+                                                     }
+                                                     return labels;
+                                                 })}
                                             </Box>
                                         ))}
                                     </Box>

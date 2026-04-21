@@ -1,0 +1,101 @@
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner></mat-spinner>
+</div>
+
+<div *ngIf="!loading">
+  <div class="header">
+    <h2>
+      <mat-icon style="vertical-align: middle; margin-right: 8px;">timeline</mat-icon>
+      Operations Dashboard
+    </h2>
+    <button mat-outlined-button (click)="loadDashboardData()">
+      <mat-icon>refresh</mat-icon> Refresh
+    </button>
+  </div>
+
+  <div *ngIf="error" class="error-alert">
+    {{ error }}
+  </div>
+
+  <!-- Top Metrics Row -->
+  <div class="metrics-grid">
+    <mat-card class="metric-card" style="--c: #1976d2">
+      <div class="metric-content">
+        <div class="metric-text">
+          <span class="label">TOTAL ITEMS</span>
+          <span class="value">{{ metrics?.total_inventory_count | number }}</span>
+        </div>
+        <div class="metric-icon-box" style="background-color: #1976d220"><mat-icon style="color: #1976d2">inventory_2</mat-icon></div>
+      </div>
+    </mat-card>
+
+    <mat-card class="metric-card" style="--c: #4caf50">
+      <div class="metric-content">
+        <div class="metric-text">
+          <span class="label">ACTIVE</span>
+          <span class="value" style="color: #4caf50">{{ metrics?.active_inventory_count | number }}</span>
+        </div>
+        <div class="metric-icon-box" style="background-color: #4caf5020"><mat-icon style="color: #4caf50">check_circle</mat-icon></div>
+      </div>
+    </mat-card>
+
+    <mat-card class="metric-card" style="--c: #2196f3">
+      <div class="metric-content">
+        <div class="metric-text">
+          <span class="label">PACKED</span>
+          <span class="value" style="color: #2196f3">{{ metrics?.packed_count | number }}</span>
+        </div>
+        <div class="metric-icon-box" style="background-color: #2196f320"><mat-icon style="color: #2196f3">archive</mat-icon></div>
+      </div>
+    </mat-card>
+
+    <mat-card class="metric-card" style="--c: #ff9800">
+      <div class="metric-content">
+        <div class="metric-text">
+          <span class="label">BOXES</span>
+          <span class="value" style="color: #ff9800">{{ metrics?.box_count | number }}</span>
+        </div>
+        <div class="metric-icon-box" style="background-color: #ff980020"><mat-icon style="color: #ff9800">archive</mat-icon></div>
+      </div>
+    </mat-card>
+  </div>
+
+  <div class="charts-grid">
+    <!-- Inventory by Stage -->
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title><mat-icon>trending_up</mat-icon> Inventory by Stage</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="stages.length > 0; else noStages">
+          <div *ngFor="let stage of stages" class="stage-item">
+            <div class="stage-header">
+              <span>{{ stage.stage }}</span>
+              <strong>{{ stage.count }} ({{ stage.percentage }}%)</strong>
+            </div>
+            <mat-progress-bar mode="determinate" [value]="stage.percentage" [ngStyle]="{'--mdc-linear-progress-active-indicator-color': getStageColor(stage.stage)}">
+            </mat-progress-bar>
+          </div>
+        </div>
+        <ng-template #noStages><div class="info-alert">No inventory data available</div></ng-template>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Alerts -->
+    <mat-card class="chart-card">
+      <mat-card-header>
+        <mat-card-title><mat-icon color="warn">warning</mat-icon> Alerts & Exceptions ({{ alerts.length }})</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list *ngIf="alerts.length > 0; else noAlerts" class="scrollable-list">
+          <mat-list-item *ngFor="let alert of alerts" class="alert-item" [ngClass]="alert.severity.toLowerCase()">
+            <mat-icon matListItemIcon [color]="getAlertConfig(alert.severity).color">{{ getAlertConfig(alert.severity).icon }}</mat-icon>
+            <div matListItemTitle>{{ alert.description }}</div>
+            <div matListItemLine>{{ alert.reference }} • {{ alert.timestamp | date:'short' }}</div>
+          </mat-list-item>
+        </mat-list>
+        <ng-template #noAlerts><div class="success-alert">No active alerts</div></ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,137 @@
+<div class="inventory-container">
+  <div class="header-area">
+    <div class="header-left">
+      <h1 class="title">
+        <mat-icon color="primary">inventory_2</mat-icon> Material Inventory
+      </h1>
+      <p class="subtitle">QC-Verified Label Management & Serialization Tracking</p>
+    </div>
+    <div class="header-right">
+      <button mat-stroked-button (click)="loadInventory()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon> Refresh Data
+      </button>
+      <button mat-flat-button color="primary" [disabled]="selectedIds.size === 0" (click)="handleBulkPrint()" class="print-btn">
+        <mat-icon>print</mat-icon> Print Selected ({{selectedIds.size}})
+      </button>
+    </div>
+  </div>
+
+  <mat-card class="toolbar-card">
+    <div class="toolbar-left">
+      <button mat-button [matMenuTriggerFor]="selectionMenu" class="selection-btn">
+        <mat-icon>check_box</mat-icon> Selection Options <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #selectionMenu="matMenu">
+        <button mat-menu-item (click)="masterToggle()">Select All (QC PASS Only)</button>
+        <div class="menu-label">SELECT BY BATCH</div>
+        <button mat-menu-item *ngFor="let b of uniqueBatches" (click)="selectByBatch(b)">Batch: {{b}}</button>
+        <div class="menu-label">SELECT BY PRODUCT</div>
+        <button mat-menu-item *ngFor="let p of uniqueProducts" (click)="selectByProduct(p)">{{p}}</button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="clearSelection()" class="text-warn">Clear Selection</button>
+      </mat-menu>
+
+      <mat-divider vertical></mat-divider>
+
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Search Serial, Material or Batch..." [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()">
+      </mat-form-field>
+
+      <mat-slide-toggle [(ngModel)]="showUnprintedOnly" (change)="applyFilters()">
+        Unprinted Only
+      </mat-slide-toggle>
+    </div>
+    <div class="toolbar-right">
+      <span class="selection-info">
+        <b>{{selectedIds.size}}</b> items selected of <b>{{passItems.length}}</b> eligible
+      </span>
+    </div>
+  </mat-card>
+
+  <mat-progress-bar mode="indeterminate" *ngIf="loading"></mat-progress-bar>
+
+  <div class="table-container mui-card">
+    <table mat-table [dataSource]="filteredInventory" class="inventory-table">
+      <!-- Checkbox Column -->
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef>
+          <mat-checkbox (change)="$event ? masterToggle() : null"
+                        [checked]="isAllSelected()"
+                        [indeterminate]="selectedIds.size > 0 && !isAllSelected()">
+          </mat-checkbox>
+        </th>
+        <td mat-cell *matCellDef="let row">
+          <mat-checkbox (click)="$event.stopPropagation()"
+                        (change)="$event ? toggleRow(row) : null"
+                        [checked]="selectedIds.has(row.id)"
+                        [disabled]="row.qualityStatus !== 'PASS'"
+                        [matTooltip]="row.qualityStatus !== 'PASS' ? 'Cannot select items requiring QC clearance' : ''">
+          </mat-checkbox>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="serialNumber">
+        <th mat-header-cell *matHeaderCellDef> Serial Number </th>
+        <td mat-cell *matCellDef="let row" class="mono-font">{{row.serialNumber}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="materialDetails">
+        <th mat-header-cell *matHeaderCellDef> Material Details </th>
+        <td mat-cell *matCellDef="let row">
+          <div class="material-info">
+            <span class="name">{{row.materialName}}</span>
+            <span class="code">Code: {{row.materialCode}}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="batchNumber">
+        <th mat-header-cell *matHeaderCellDef> Batch / Lot </th>
+        <td mat-cell *matCellDef="let row">
+          <span class="batch-chip">{{row.batchNumber}}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="qualityStatus">
+        <th mat-header-cell *matHeaderCellDef> Quality Status </th>
+        <td mat-cell *matCellDef="let row">
+          <span class="status-chip" [ngClass]="row.qualityStatus.toLowerCase()">
+            {{row.qualityStatus}}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="labelPrinted">
+        <th mat-header-cell *matHeaderCellDef> Label Printed </th>
+        <td mat-cell *matCellDef="let row">
+          <span class="print-chip" [class.printed]="row.labelPrinted === 'Y'">
+            {{row.labelPrinted === 'Y' ? 'YES' : 'NO'}}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="location">
+        <th mat-header-cell *matHeaderCellDef> Location </th>
+        <td mat-cell *matCellDef="let row">
+          <div class="location-info">
+            <mat-icon>location_on</mat-icon>
+            {{row.locationName || 'N/A'}}
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;" 
+          (click)="toggleRow(row)"
+          [class.selected-row]="selectedIds.has(row.id)"
+          [class.disabled-row]="row.qualityStatus !== 'PASS'"></tr>
+    </table>
+
+    <div class="no-data" *ngIf="!loading && filteredInventory.length === 0">
+      <mat-icon>inventory_2</mat-icon>
+      <h3>No eligible inventory found</h3>
+      <p>Only QC Pass materials are eligible for label printing</p>
+    </div>
+  </div>
+</div>

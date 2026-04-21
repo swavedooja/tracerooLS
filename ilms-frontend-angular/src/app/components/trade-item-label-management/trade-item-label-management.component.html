@@ -1,0 +1,174 @@
+<div class="page-container">
+  <mat-grid-list cols="12" rowHeight="100%" gutterSize="16px">
+    <!-- Sidebar: Hierarchies -->
+    <mat-grid-tile colspan="3">
+      <div class="sidebar-wrapper">
+        <div class="sidebar-header">
+          <span class="title">Trade Item Hierarchies</span>
+          <button mat-icon-button (click)="openNewHierarchyDialog(newHierarchyDialog)">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+        
+        <div class="sidebar-filters">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-icon matPrefix>search</mat-icon>
+            <input matInput placeholder="Search hierarchies..." [(ngModel)]="searchQuery">
+          </mat-form-field>
+          <div class="filter-row">
+            <mat-form-field appearance="outline">
+              <mat-select [(ngModel)]="productFilter">
+                <mat-option value="All">All Products</mat-option>
+                <mat-option *ngFor="let p of products" [value]="p">{{p}}</mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-select [(ngModel)]="sortOrder">
+                <mat-option value="A-Z">A-Z</mat-option>
+                <mat-option value="Z-A">Z-A</mat-option>
+                <mat-option value="Newest">Newest</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <mat-selection-list [multiple]="false" class="hierarchy-list">
+          <mat-list-option *ngFor="let h of filteredHierarchies; let i = index" 
+                           [selected]="selectedHierarchy?.id === h.id"
+                           (click)="selectHierarchy(h)">
+            <span class="index">{{i + 1}}.</span>
+            <span class="name">{{h.name}}</span>
+          </mat-list-option>
+        </mat-selection-list>
+      </div>
+    </mat-grid-tile>
+
+    <!-- Main Content: Levels -->
+    <mat-grid-tile colspan="9">
+      <div class="main-wrapper">
+        <ng-container *ngIf="selectedHierarchy; else noSelection">
+          <div class="main-header">
+            <h3>Levels for {{selectedHierarchy.name}}</h3>
+            <button mat-flat-button color="primary" (click)="openAddLevelDialog(addLevelDialog)">
+              <mat-icon>add</mat-icon> Add Level
+            </button>
+          </div>
+
+          <div class="levels-container">
+            <p *ngIf="levels.length === 0" class="empty-hint">
+              No levels defined. Add levels like "Primary Box", "Carton", "Pallet".
+            </p>
+            
+            <div class="level-item" *ngFor="let l of levels">
+              <div class="level-index">{{l.level_order}}</div>
+              <div class="level-details">
+                <div class="level-name">{{l.level_name}}</div>
+                <div class="level-sub">
+                  {{l.label_template ? 'Template: ' + l.label_template.name : 'No Label Template Linked'}}
+                </div>
+              </div>
+              <div class="level-actions">
+                <button mat-icon-button color="primary" matTooltip="Link Template / Design Label">
+                  <mat-icon>link</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="deleteLevel(l.id)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3D View -->
+          <div class="three-d-section" *ngIf="levels.length > 0">
+            <div class="section-title">Packaging Hierarchy – 3D View</div>
+            <div class="three-d-placeholder">
+              <app-packaging-threed-view [levels]="getThreeDLevels()"></app-packaging-threed-view>
+            </div>
+          </div>
+        </ng-container>
+
+        <ng-template #noSelection>
+          <div class="placeholder">
+            <mat-icon>layers</mat-icon>
+            <p>Select a Hierarchy to configure</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-grid-tile>
+  </mat-grid-list>
+</div>
+
+<!-- New Hierarchy Dialog -->
+<ng-template #newHierarchyDialog>
+  <h2 mat-dialog-title>New Trade Hierarchy</h2>
+  <mat-dialog-content>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Product</mat-label>
+      <mat-select [(ngModel)]="dialogForm.selectedProduct">
+        <mat-option *ngFor="let p of products" [value]="p">
+          <mat-icon>{{getIconForType(p)}}</mat-icon> {{p}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <ng-container *ngIf="dialogForm.selectedProduct">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>SKU</mat-label>
+        <mat-select [(ngModel)]="dialogForm.selectedSku">
+          <mat-option *ngFor="let sku of PRODUCT_HIERARCHY_DATA[dialogForm.selectedProduct].skus" [value]="sku.name">
+            <mat-icon>{{getIconForType(sku.type || sku.name)}}</mat-icon> {{sku.name}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Packaging Type (Optional)</mat-label>
+        <mat-select [(ngModel)]="dialogForm.selectedPackagingType">
+          <mat-option [value]="''">None</mat-option>
+          <mat-option *ngFor="let pt of PRODUCT_HIERARCHY_DATA[dialogForm.selectedProduct].packagingTypes" [value]="pt">
+            {{pt}}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ng-container>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-flat-button color="primary" [disabled]="!dialogForm.selectedProduct || !dialogForm.selectedSku" (click)="createHierarchy()">Create</button>
+  </mat-dialog-actions>
+</ng-template>
+
+<!-- Add Level Dialog -->
+<ng-template #addLevelDialog>
+  <h2 mat-dialog-title>Add Level</h2>
+  <mat-dialog-content>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{dialogForm.levelOrder === 1 ? 'Product (Level 1 Item)' : 'Packaging Level'}}</mat-label>
+      <mat-select [(ngModel)]="dialogForm.levelName">
+        <mat-option *ngFor="let pkg of PHARMA_PACKAGING_DATA" [value]="pkg.name">
+          {{pkg.name}} ({{pkg.type}})
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width" *ngIf="dialogForm.levelOrder === 1">
+      <mat-label>GTIN</mat-label>
+      <input matInput [(ngModel)]="dialogForm.gtin">
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>Order</mat-label>
+        <input matInput type="number" [(ngModel)]="dialogForm.levelOrder">
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Capacity</mat-label>
+        <input matInput type="number" [(ngModel)]="dialogForm.levelCapacity">
+      </mat-form-field>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancel</button>
+    <button mat-flat-button color="primary" (click)="saveLevel()">Add</button>
+  </mat-dialog-actions>
+</ng-template>

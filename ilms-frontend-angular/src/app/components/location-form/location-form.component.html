@@ -1,0 +1,113 @@
+<mat-card class="location-form-card">
+  <div class="card-header">
+    <div class="header-left">
+      <h2 class="title">{{ code === 'new' ? 'New Location' : 'Edit Location' }}</h2>
+      <mat-chip *ngIf="code && code !== 'new'" class="code-chip">{{code}}</mat-chip>
+    </div>
+    <div class="header-right">
+      <button mat-icon-button (click)="handleAutoFill()" matTooltip="Auto-fill" color="accent" *ngIf="code === 'new'">
+        <mat-icon>auto_fix_high</mat-icon>
+      </button>
+      <button mat-flat-button color="primary" (click)="save()" [disabled]="loading || form.invalid" class="save-btn">
+        <mat-icon>save</mat-icon> Save
+      </button>
+      <button mat-button color="warn" (click)="handleDelete()" *ngIf="code && code !== 'new'" class="delete-btn">
+        <mat-icon>delete</mat-icon> Delete
+      </button>
+    </div>
+  </div>
+
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-tab-group class="form-tabs">
+    <mat-tab label="General">
+      <form [formGroup]="form" class="tab-content">
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Code</mat-label>
+            <input matInput formControlName="code" [readonly]="code !== 'new'" required>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" required>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Type</mat-label>
+            <mat-select formControlName="type">
+              <mat-option *ngFor="let t of types" [value]="t.def_value">{{t.description}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Category</mat-label>
+            <mat-select formControlName="category">
+              <mat-option *ngFor="let c of cats" [value]="c.def_value">{{c.description}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Parent Location</mat-label>
+            <mat-select formControlName="parentId">
+              <mat-option [value]="null">None (Root)</mat-option>
+              <mat-option *ngFor="let l of locations" [value]="l.id">{{l.name}} ({{l.code}})</mat-option>
+            </mat-select>
+            <mat-hint>Changing parent moves the location in the hierarchy.</mat-hint>
+          </mat-form-field>
+        </div>
+      </form>
+    </mat-tab>
+
+    <mat-tab label="Physical & Address">
+      <form [formGroup]="form" class="tab-content">
+        <div class="form-grid">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Address</mat-label>
+            <input matInput formControlName="address">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>City</mat-label>
+            <input matInput formControlName="city">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>State</mat-label>
+            <input matInput formControlName="state">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Country</mat-label>
+            <input matInput formControlName="country">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Zip Code</mat-label>
+            <input matInput formControlName="zipCode">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Latitude</mat-label>
+            <input matInput type="number" formControlName="latitude">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Longitude</mat-label>
+            <input matInput type="number" formControlName="longitude">
+          </mat-form-field>
+        </div>
+      </form>
+    </mat-tab>
+
+    <mat-tab label="Track & Trace">
+      <form [formGroup]="form" class="tab-content">
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>GLN</mat-label>
+            <input matInput formControlName="gln">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>RFID Reader ID</mat-label>
+            <input matInput formControlName="rfidReaderId">
+          </mat-form-field>
+          <div class="full-width">
+            <mat-slide-toggle formControlName="isQuarantine">Quarantine Location</mat-slide-toggle>
+          </div>
+        </div>
+      </form>
+    </mat-tab>
+  </mat-tab-group>
+</mat-card>
