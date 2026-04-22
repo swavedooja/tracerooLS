@@ -220,8 +220,8 @@ export const InventoryAPI = {
   list: async (filters = {}) => {
     let query = supabase.from('inventory').select(`
             *,
-            material:materials(id, code, name),
-            location:location_id(id, code, name)
+            material:materials!inventory_material_code_fkey(id, code, name),
+            location:locations!inventory_location_id_fkey(id, code, name)
         `);
 
     if (filters.status) {
@@ -251,8 +251,8 @@ export const InventoryAPI = {
   get: async (id) => {
     const { data, error } = await supabase.from('inventory').select(`
             *,
-            material:materials(id, code, name),
-            location:location_id(id, code, name)
+            material:materials!inventory_material_code_fkey(id, code, name),
+            location:locations!inventory_location_id_fkey(id, code, name)
         `).eq('id', id).single();
     if (error) throw error;
     return transformInventory(data);
@@ -261,8 +261,8 @@ export const InventoryAPI = {
   getBySerial: async (serialNumber) => {
     const { data, error } = await supabase.from('inventory').select(`
             *,
-            material:materials(id, code, name),
-            location:location_id(id, code, name)
+            material:materials!inventory_material_code_fkey(id, code, name),
+            location:locations!inventory_location_id_fkey(id, code, name)
         `).eq('serial_number', serialNumber).single();
     if (error) throw error;
     return transformInventory(data);
@@ -271,8 +271,8 @@ export const InventoryAPI = {
   getByBatch: async (batchNumber) => {
     const { data, error } = await supabase.from('inventory').select(`
             *,
-            material:materials(id, code, name),
-            location:location_id(id, code, name)
+            material:materials!inventory_material_code_fkey(id, code, name),
+            location:locations!inventory_location_id_fkey(id, code, name)
         `).eq('batch_number', batchNumber);
     if (error) throw error;
     return data.map(transformInventory);
@@ -478,7 +478,7 @@ export const ContainerAPI = {
   list: async (filters = {}) => {
     let query = supabase.from('container_unit').select(`
       *,
-      location:locations(id, code, name),
+      location:locations!container_unit_location_id_fkey(id, code, name),
       packaging_level:packaging_level(id, level_name)
     `);
 
@@ -500,7 +500,7 @@ export const ContainerAPI = {
   get: async (id) => {
     const { data, error } = await supabase.from('container_unit').select(`
       *,
-      location:locations(id, code, name),
+      location:locations!container_unit_location_id_fkey(id, code, name),
       packaging_level:packaging_level(id, level_name)
     `).eq('id', id).single();
     if (error) throw error;
@@ -510,7 +510,7 @@ export const ContainerAPI = {
   getBySerial: async (serialNumber) => {
     const { data, error } = await supabase.from('container_unit').select(`
       *,
-      location:locations(id, code, name),
+      location:locations!container_unit_location_id_fkey(id, code, name),
       packaging_level:packaging_level(id, level_name)
     `).eq('serial_number', serialNumber).single();
     if (error) throw error;
@@ -756,9 +756,9 @@ export const TraceAPI = {
   searchBySerial: async (serial) => {
     // Try inventory first
     const { data: invData } = await supabase.from('inventory')
-      .select(`*, material:materials(code, name), location:locations(code, name)`)
+      .select(`*, material:materials!inventory_material_code_fkey(code, name), location:locations!inventory_location_id_fkey(code, name)`)
       .eq('serial_number', serial)
-      .single();
+      .maybeSingle();
 
     if (invData) {
       return { type: 'INVENTORY', data: invData };
@@ -766,9 +766,9 @@ export const TraceAPI = {
 
     // Try container
     const { data: contData } = await supabase.from('container_unit')
-      .select(`*, location:locations(code, name)`)
+      .select(`*, location:locations!container_unit_location_id_fkey(code, name)`)
       .eq('serial_number', serial)
-      .single();
+      .maybeSingle();
 
     if (contData) {
       return { type: 'CONTAINER', data: contData };

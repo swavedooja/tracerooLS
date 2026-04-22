@@ -53,6 +53,7 @@ import OrderLifecycleDashboard from './components/Dashboard/OrderLifecycleDashbo
 import ShipmentCreate from './components/Shipping/ShipmentCreate';
 import Login from './components/Login';
 import Footer from './components/Footer';
+import TracerooChatbot from './components/Chat/TracerooChatbot';
 import {
   Menu as MenuIcon,
   AddCircleOutline,
@@ -338,6 +339,7 @@ export default function App() {
         </Routes>
       </Container>
       {!isMobileWireframe && <Footer className="no-print" />}
+      {!isMobileWireframe && <TracerooChatbot />}
     </Box>
   );
 }
