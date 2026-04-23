@@ -10,7 +10,8 @@ import {
 import { 
     ArrowBack, CheckCircle, Print, Storage, 
     PlayCircleOutline, ShoppingCart, Business, 
-    CalendarMonth, LocalShipping, Edit, Calculate
+    CalendarMonth, LocalShipping, Edit, Calculate,
+    Assignment, Info, NavigateNext
 } from '@mui/icons-material';
 import { PackagingAPI, OrdersAPI } from '../../../services/APIService';
 import LabelPreview from '../../LabelPreview';
@@ -21,7 +22,7 @@ export default function ShippingLabelGenerator() {
     const navigate = useNavigate();
     const location = useLocation();
     const [activeStep, setActiveStep] = useState(0);
-    const steps = ['Order Selection', 'Configure Packaging', 'Preview & Print'];
+    const steps = ['Order Selection', 'Select Line Item', 'Configure Packaging', 'Preview & Print'];
 
     // Data State
     const [orders, setOrders] = useState([]);
@@ -31,7 +32,9 @@ export default function ShippingLabelGenerator() {
     
     // Configuration State
     const [lineConfigs, setLineConfigs] = useState({}); // lineId -> { hierarchy, levels, counts: { levelId: count } }
+    const [selectedLine, setSelectedLine] = useState(null);
     const [hierarchyDialog, setHierarchyDialog] = useState({ open: false, line: null, options: [] });
+    const [detailDialog, setDetailDialog] = useState({ open: false, data: null, type: 'ORDER' });
 
     useEffect(() => {
         loadPendingOrders();
@@ -109,8 +112,9 @@ export default function ShippingLabelGenerator() {
         try {
             const lines = await OrdersAPI.getLines(order.id);
             setOrderLines(lines);
+            setActiveStep(1); // Move to line selection
             
-            // For each line, try to find and auto-assign hierarchy
+            // For each line, try to pre-fetch hierarchies
             const configs = {};
             for (const line of lines) {
                 // Try to find hierarchy by material code, or its name (e.g. "Amoxicillin")
@@ -138,6 +142,11 @@ export default function ShippingLabelGenerator() {
             setLineConfigs(configs);
         } catch (e) { console.error(e); }
         setLoading(false);
+    };
+
+    const handleLineSelect = (line) => {
+        setSelectedLine(line);
+        setActiveStep(2); // Move to packaging config
     };
 
     const calculateDefaultCounts = (qty, levels) => {
@@ -188,48 +197,49 @@ export default function ShippingLabelGenerator() {
         doc.text("SHIPPING LABELS", 105, 20, { align: 'center' });
         
         let y = 40;
-        Object.entries(lineConfigs).forEach(([lineId, config]) => {
-            const line = orderLines.find(l => l.id === lineId);
+        const line = selectedLine;
+        const config = lineConfigs[line.id];
             
-            config.levels?.forEach(lvl => {
-                const count = config.counts[lvl.id] || 0;
-                for (let i = 0; i < count; i++) {
-                    if (y > 250) {
-                        doc.addPage();
-                        y = 20;
-                    }
-                    
-                    doc.setDrawColor(0);
-                    doc.rect(20, y, 170, 45); // Label border
-                    
-                    doc.setFontSize(12);
-                    doc.setFont("helvetica", "bold");
-                    doc.text(`${line?.material?.name || line?.material_code}`, 25, y + 10);
-                    
-                    doc.setFont("helvetica", "normal");
-                    doc.setFontSize(9);
-                    doc.text(`LEVEL: ${lvl.level_name}`, 25, y + 18);
-                    doc.text(`ORDER: ${selectedOrder?.order_number}`, 25, y + 25);
-                    doc.text(`SERIAL: ${lvl.level_code}-${Math.floor(Math.random()*10000)}`, 25, y + 32);
-                    
-                    // Design representation (simplified barcode for PDF)
-                    doc.setDrawColor(100);
-                    doc.rect(120, y + 10, 60, 25);
-                    doc.setFontSize(7);
-                    doc.text("BARCODE DATA", 150, y + 25, { align: 'center' });
-                    
-                    y += 55;
+        config.levels?.forEach(lvl => {
+            const count = config.counts[lvl.id] || 0;
+            for (let i = 0; i < count; i++) {
+                if (y > 250) {
+                    doc.addPage();
+                    y = 20;
                 }
-            });
+                
+                doc.setDrawColor(0);
+                doc.rect(20, y, 170, 45); // Label border
+                
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "bold");
+                doc.text(`${line?.material?.name || line?.material_code}`, 25, y + 10);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(9);
+                doc.text(`LEVEL: ${lvl.level_name}`, 25, y + 18);
+                doc.text(`ORDER: ${selectedOrder?.order_number}`, 25, y + 25);
+                doc.text(`SERIAL: ${lvl.level_code}-${Math.floor(Math.random()*10000)}`, 25, y + 32);
+                
+                // Design representation (simplified barcode for PDF)
+                doc.setDrawColor(100);
+                doc.rect(120, y + 10, 60, 25);
+                doc.setFontSize(7);
+                doc.text("BARCODE DATA", 150, y + 25, { align: 'center' });
+                
+                y += 55;
+            }
         });
         
-        doc.save(`Shipping_Labels_${selectedOrder?.order_number}.pdf`);
+        doc.save(`Shipping_Labels_${selectedOrder?.order_number}_${line.material_code}.pdf`);
     };
 
     const canProceedToSteps = () => {
         if (activeStep === 0) return !!selectedOrder;
-        if (activeStep === 1) {
-            return Object.values(lineConfigs).every(c => c.hierarchy && !c.needsSelection);
+        if (activeStep === 1) return !!selectedLine;
+        if (activeStep === 2) {
+            const c = lineConfigs[selectedLine?.id];
+            return c?.hierarchy && !c?.needsSelection;
         }
         return true;
     };
@@ -253,7 +263,15 @@ export default function ShippingLabelGenerator() {
                         <CardContent>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                                 <Avatar sx={{ bgcolor: 'primary.main' }}><ShoppingCart /></Avatar>
-                                <Chip label={order.status} size="small" color="warning" variant="outlined" />
+                                <Box sx={{ textAlign: 'right' }}>
+                                    <Chip label={order.status} size="small" color="warning" variant="outlined" sx={{ mb: 1 }} />
+                                    <IconButton size="small" onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDetailDialog({ open: true, data: order, type: 'ORDER' });
+                                    }}>
+                                        <Info sx={{ fontSize: 18 }} />
+                                    </IconButton>
+                                </Box>
                             </Box>
                             <Typography variant="h6" fontWeight="800">{order.order_number}</Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, color: 'text.secondary' }}>
@@ -272,71 +290,82 @@ export default function ShippingLabelGenerator() {
         </Grid>
     );
 
-    const PackagingConfig = () => (
-        <Box>
-            {orderLines.map(line => {
-                const config = lineConfigs[line.id];
-                return (
-                    <Paper key={line.id} variant="outlined" sx={{ p: 3, mb: 3, borderRadius: 3 }}>
-                        <Grid container spacing={3} alignItems="center">
-                            <Grid item xs={12} md={4}>
-                                <Typography variant="subtitle2" color="primary" fontWeight="bold">MATERIAL</Typography>
-                                <Typography variant="h6" fontWeight="bold">{line.material?.name || `Material: ${line.material_code}`}</Typography>
-                                <Typography variant="body2" color="text.secondary">Order Quantity: {line.quantity} {line.uom}</Typography>
-                                
-                                {config?.needsSelection && (
-                                    <Button 
-                                        sx={{ mt: 1 }} 
-                                        variant="contained" 
-                                        color="warning" 
-                                        size="small"
-                                        startIcon={<Edit />}
-                                        onClick={() => setHierarchyDialog({ open: true, line, options: config.hierarchies })}
-                                    >
-                                        Choose Packaging Template
-                                    </Button>
-                                )}
-                                {config?.hierarchy && !config.needsSelection && (
-                                    <Box sx={{ mt: 1, p: 1, bgcolor: '#f0f9ff', borderRadius: 1, border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: 1 }}>
-                                        <Storage fontSize="small" sx={{ color: '#0369a1' }} />
-                                        <Typography variant="caption" fontWeight="800" sx={{ color: '#0369a1' }}>{config.hierarchy.name}</Typography>
-                                        <IconButton size="small" onClick={() => setHierarchyDialog({ open: true, line, options: [config.hierarchy] })}><Edit sx={{ fontSize: 14 }} /></IconButton>
-                                    </Box>
-                                )}
-                            </Grid>
-                            
-                            <Grid item xs={12} md={8}>
-                                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Calculate fontSize="small" /> Required Shipping Labels (Auto-Calculated)
-                                </Typography>
-                                <Grid container spacing={2}>
-                                    {config?.levels?.map(lvl => (
-                                        <Grid item xs={12} sm={4} key={lvl.id}>
-                                            <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
-                                                <Typography variant="caption" fontWeight="bold" sx={{ display: 'block', mb: 1 }}>{lvl.level_name}</Typography>
-                                                <TextField 
-                                                    fullWidth 
-                                                    type="number" 
-                                                    size="small" 
-                                                    value={config.counts[lvl.id] || 0}
-                                                    onChange={(e) => updateLevelCount(line.id, lvl.id, e.target.value)}
-                                                    InputProps={{ sx: { bgcolor: 'white' } }}
-                                                />
-                                                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                                                    {lvl.contained_quantity} units/pack
-                                                </Typography>
-                                            </Paper>
-                                        </Grid>
-                                    ))}
-                                    {!config?.levels && <Typography variant="caption" color="error">Configure hierarchy to calculate labels.</Typography>}
+    const PackagingConfig = () => {
+        const line = selectedLine;
+        const config = lineConfigs[line?.id];
+        if (!line) return null;
+        
+        return (
+            <Paper variant="outlined" sx={{ p: 4, mb: 3, borderRadius: 4, border: '1px solid #e2e8f0' }}>
+                <Grid container spacing={4} alignItems="center">
+                    <Grid item xs={12} md={4}>
+                        <Box sx={{ mb: 3 }}>
+                            <Typography variant="overline" color="primary" sx={{ fontWeight: 'bold', letterSpacing: 1.2 }}>ITEM SPECIFICATION</Typography>
+                            <Typography variant="h5" fontWeight="900" sx={{ mt: 1 }}>{line.material?.name || line.material_code}</Typography>
+                            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.5 }}>SKU: {line.material_code}</Typography>
+                        </Box>
+                        
+                        <Paper variant="outlined" sx={{ p: 2, bgcolor: '#f8fafc', mb: 3, borderRadius: 2 }}>
+                            <Typography variant="caption" color="text.secondary" display="block">PLAN QUANTITY</Typography>
+                            <Typography variant="h6" fontWeight="bold">{line.quantity} <Typography component="span" variant="caption" color="text.secondary">{line.uom}</Typography></Typography>
+                        </Paper>
+                        
+                        {config?.needsSelection && (
+                            <Button 
+                                fullWidth
+                                variant="contained" 
+                                color="warning" 
+                                size="large"
+                                startIcon={<Edit />}
+                                onClick={() => setHierarchyDialog({ open: true, line, options: config.hierarchies })}
+                                sx={{ py: 1.5, borderRadius: 2 }}
+                            >
+                                Choose Packaging Template
+                            </Button>
+                        )}
+                        {config?.hierarchy && !config.needsSelection && (
+                            <Box sx={{ p: 2, bgcolor: '#f0f9ff', borderRadius: 2, border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', gap: 2 }}>
+                                <Storage fontSize="medium" sx={{ color: '#0369a1' }} />
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">PACKAGING HIERARCHY</Typography>
+                                    <Typography variant="body2" fontWeight="800" sx={{ color: '#0369a1' }}>{config.hierarchy.name}</Typography>
+                                </Box>
+                                <IconButton sx={{ ml: 'auto' }} onClick={() => setHierarchyDialog({ open: true, line, options: [config.hierarchy] })}><Edit sx={{ fontSize: 18 }} /></IconButton>
+                            </Box>
+                        )}
+                    </Grid>
+                    
+                    <Grid item xs={12} md={8}>
+                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Calculate fontSize="small" /> Required Shipping Labels (Auto-Calculated)
+                        </Typography>
+                        <Grid container spacing={2}>
+                            {config?.levels?.map(lvl => (
+                                <Grid item xs={12} sm={4} key={lvl.id}>
+                                    <Paper variant="outlined" sx={{ p: 2.5, bgcolor: '#f8fafc', borderRadius: 3, border: '1px solid #f1f5f9 transition', '&:hover': { borderColor: 'primary.light' } }}>
+                                        <Typography variant="caption" fontWeight="bold" sx={{ display: 'block', mb: 1, color: 'text.secondary', textTransform: 'uppercase' }}>{lvl.level_name}</Typography>
+                                        <TextField 
+                                            fullWidth 
+                                            type="number" 
+                                            variant="standard"
+                                            value={config.counts[lvl.id] || 0}
+                                            onChange={(e) => updateLevelCount(line.id, lvl.id, e.target.value)}
+                                            InputProps={{ sx: { fontSize: '1.2rem', fontWeight: 'bold' }, disableUnderline: true }}
+                                        />
+                                        <Divider sx={{ my: 1 }} />
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                            {lvl.contained_quantity} units per {lvl.level_name.split(' ')[0]}
+                                        </Typography>
+                                    </Paper>
                                 </Grid>
-                            </Grid>
+                            ))}
+                            {!config?.levels && <Alert severity="warning" sx={{ width: '100%', borderRadius: 3 }}>No compatible packaging hierarchy found for this material. Please configure one in Label Management.</Alert>}
                         </Grid>
-                    </Paper>
-                );
-            })}
-        </Box>
-    );
+                    </Grid>
+                </Grid>
+            </Paper>
+        );
+    };
 
     return (
         <Box sx={{ p: 3 }}>
@@ -350,13 +379,24 @@ export default function ShippingLabelGenerator() {
                     </Typography>
                 </Box>
                 {selectedOrder && (
-                    <Chip 
-                        icon={<ShoppingCart />} 
-                        label={`Order: ${selectedOrder.order_number}`} 
-                        color="primary" 
-                        variant="filled" 
-                        sx={{ fontWeight: 'bold' }} 
-                    />
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Chip 
+                            icon={<ShoppingCart />} 
+                            label={`Order: ${selectedOrder.order_number}`} 
+                            color="primary" 
+                            variant="filled" 
+                            sx={{ fontWeight: 'bold' }} 
+                        />
+                        {selectedLine && (
+                            <Chip 
+                                icon={<CheckCircle />} 
+                                label={`Line: ${selectedLine.material_code}`} 
+                                color="secondary" 
+                                variant="filled" 
+                                sx={{ fontWeight: 'bold' }} 
+                            />
+                        )}
+                    </Box>
                 )}
             </Box>
 
@@ -370,8 +410,48 @@ export default function ShippingLabelGenerator() {
 
             <Box sx={{ minHeight: '50vh' }}>
                 {activeStep === 0 && <OrderGrid />}
-                {activeStep === 1 && <PackagingConfig />}
-                {activeStep === 2 && (
+                {activeStep === 1 && (
+                    <Grid container spacing={2}>
+                        <Grid item xs={12}>
+                            <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>SELECT A LINE ITEM TO CONFIGURE LABELS</Typography>
+                        </Grid>
+                        {orderLines.map(line => (
+                            <Grid item xs={12} md={6} key={line.id}>
+                                <Paper 
+                                    variant="outlined" 
+                                    onClick={() => handleLineSelect(line)}
+                                    sx={{ 
+                                        p: 3, 
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        border: selectedLine?.id === line.id ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                                        bgcolor: selectedLine?.id === line.id ? '#eff6ff' : 'white',
+                                        '&:hover': { transform: 'scale(1.01)', boxShadow: 1 }
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Avatar sx={{ bgcolor: 'secondary.main' }}><Assignment /></Avatar>
+                                        <Box sx={{ flex: 1 }}>
+                                            <Typography variant="subtitle1" fontWeight="bold">{line.material?.name || line.material_code}</Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                Qty: {line.quantity} {line.uom} • {line.total_price ? `${line.total_price?.toLocaleString()} ${selectedOrder.currency}` : line.material_code}
+                                            </Typography>
+                                        </Box>
+                                        <IconButton size="small" onClick={(e) => {
+                                            e.stopPropagation();
+                                            setDetailDialog({ open: true, data: line, type: 'LINE' });
+                                        }}>
+                                            <Info sx={{ fontSize: 18 }} />
+                                        </IconButton>
+                                        <NavigateNext color="action" />
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                        ))}
+                    </Grid>
+                )}
+                {activeStep === 2 && <PackagingConfig />}
+                {activeStep === 3 && (
                     <Box sx={{ py: 3 }}>
                         <Grid container spacing={4}>
                             <Grid item xs={12} md={6} className="no-print">
@@ -433,71 +513,75 @@ export default function ShippingLabelGenerator() {
                                         <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#27c93f' }} />
                                     </Box>
                                     <Box sx={{ p: 3, height: 'calc(100% - 40px)', overflow: 'auto', '@media print': { overflow: 'visible', p: 0 } }}>
-                                        {Object.entries(lineConfigs).map(([lineId, config]) => (
-                                            <Box key={lineId} sx={{ mb: 4, '@media print': { mb: 0 } }}>
-                                                <Typography variant="overline" color="primary" className="no-print">{config.hierarchy?.name}</Typography>
-                                                {config.levels?.map(lvl => {
-                                                     const count = config.counts[lvl.id] || 0;
-                                                     const labels = [];
-                                                     for (let i = 0; i < count; i++) {
-                                                         labels.push(
-                                                            <Box key={`${lvl.id}-${i}`} sx={{ 
-                                                                mb: 2, 
-                                                                transform: 'scale(0.8)', 
-                                                                transformOrigin: 'top left',
-                                                                '@media print': {
-                                                                    transform: 'none',
-                                                                    pageBreakAfter: 'always',
-                                                                    mb: 0,
-                                                                    display: 'flex',
-                                                                    justifyContent: 'center',
-                                                                    pt: 5
-                                                                }
-                                                            }}>
-                                                               <Box className="no-print" sx={{ mb: 1 }}>
-                                                                    <Typography variant="caption" fontWeight="bold">{lvl.level_name} ({i+1}/{count})</Typography>
-                                                               </Box>
-                                                               <Paper sx={{ 
-                                                                    p: 2, 
-                                                                    border: '1px solid #000', 
-                                                                    width: 300, 
-                                                                    height: 180,
-                                                                    display: 'flex',
-                                                                    flexDirection: 'column',
-                                                                    justifyContent: 'space-between'
+                                        {selectedLine && (() => {
+                                            const config = lineConfigs[selectedLine.id];
+                                            if (!config) return null;
+                                            return (
+                                                <Box key={selectedLine.id} sx={{ mb: 4, '@media print': { mb: 0 } }}>
+                                                    <Typography variant="overline" color="primary" className="no-print">{config.hierarchy?.name}</Typography>
+                                                    {config.levels?.map(lvl => {
+                                                        const count = config.counts[lvl.id] || 0;
+                                                        const labels = [];
+                                                        for (let i = 0; i < count; i++) {
+                                                            labels.push(
+                                                                <Box key={`${lvl.id}-${i}`} sx={{ 
+                                                                    mb: 2, 
+                                                                    transform: 'scale(0.8)', 
+                                                                    transformOrigin: 'top left',
+                                                                    '@media print': {
+                                                                        transform: 'none',
+                                                                        pageBreakAfter: 'always',
+                                                                        mb: 0,
+                                                                        display: 'flex',
+                                                                        justifyContent: 'center',
+                                                                        pt: 5
+                                                                    }
                                                                 }}>
-                                                                    <Box>
-                                                                        <Typography variant="overline" sx={{ fontWeight: 'bold', fontSize: 10, borderBottom: '1px solid #eee' }}>ILMS SHIPPING LABEL</Typography>
-                                                                        <Typography variant="body2" sx={{ fontSize: 11, fontWeight: 'bold', mt: 1 }}>
-                                                                            {config.hierarchy?.name || 'Trade Item'}
-                                                                        </Typography>
-                                                                        <Typography variant="caption" sx={{ fontSize: 9 }}>
-                                                                            LVL: {lvl.level_name} | QTY: {lvl.contained_quantity}
-                                                                        </Typography>
+                                                                    <Box className="no-print" sx={{ mb: 1 }}>
+                                                                        <Typography variant="caption" fontWeight="bold">{lvl.level_name} ({i+1}/{count})</Typography>
                                                                     </Box>
-                                                                    
-                                                                    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                                                                        <Barcode 
-                                                                            value={lvl.level_code ? `${lvl.level_code}-${1000 + i}` : `SHP-${lvl.id}-${i}`} 
-                                                                            width={1.2}
-                                                                            height={40}
-                                                                            fontSize={8}
-                                                                        />
-                                                                    </Box>
-                                                                    
-                                                                    <Box>
-                                                                        <Typography variant="caption" sx={{ fontSize: 8, color: 'text.secondary' }}>
-                                                                            BATCH: 2024-X1 | SO: {selectedOrder?.order_number || 'INTERNAL'}
-                                                                        </Typography>
-                                                                    </Box>
-                                                               </Paper>
-                                                            </Box>
-                                                         );
-                                                     }
-                                                     return labels;
-                                                 })}
-                                            </Box>
-                                        ))}
+                                                                    <Paper sx={{ 
+                                                                        p: 2, 
+                                                                        border: '1px solid #000', 
+                                                                        width: 300, 
+                                                                        height: 180,
+                                                                        display: 'flex',
+                                                                        flexDirection: 'column',
+                                                                        justifyContent: 'space-between'
+                                                                    }}>
+                                                                        <Box>
+                                                                            <Typography variant="overline" sx={{ fontWeight: 'bold', fontSize: 10, borderBottom: '1px solid #eee' }}>ILMS SHIPPING LABEL</Typography>
+                                                                            <Typography variant="body2" sx={{ fontSize: 11, fontWeight: 'bold', mt: 1 }}>
+                                                                                {config.hierarchy?.name || 'Trade Item'}
+                                                                            </Typography>
+                                                                            <Typography variant="caption" sx={{ fontSize: 9 }}>
+                                                                                LVL: {lvl.level_name} | QTY: {lvl.contained_quantity}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                        
+                                                                        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                                                                            <Barcode 
+                                                                                value={lvl.level_code ? `${lvl.level_code}-${1000 + i}` : `SHP-${lvl.id}-${i}`} 
+                                                                                width={1.2}
+                                                                                height={40}
+                                                                                fontSize={8}
+                                                                            />
+                                                                        </Box>
+                                                                        
+                                                                        <Box>
+                                                                            <Typography variant="caption" sx={{ fontSize: 8, color: 'text.secondary' }}>
+                                                                                BATCH: 2024-X1 | SO: {selectedOrder?.order_number || 'INTERNAL'}
+                                                                            </Typography>
+                                                                        </Box>
+                                                                    </Paper>
+                                                                </Box>
+                                                            );
+                                                        }
+                                                        return labels;
+                                                    })}
+                                                </Box>
+                                            );
+                                        })()}
                                     </Box>
                                 </Paper>
                             </Grid>
@@ -540,6 +624,84 @@ export default function ShippingLabelGenerator() {
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setHierarchyDialog(p => ({ ...p, open: false }))}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Commercial Details Dialog */}
+            <Dialog 
+                open={detailDialog.open} 
+                onClose={() => setDetailDialog({ ...detailDialog, open: false })}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 4, p: 1 } }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, fontWeight: 'bold', color: 'primary.main' }}>
+                    {detailDialog.type === 'ORDER' ? <ShoppingCart /> : <Assignment />}
+                    {detailDialog.type === 'ORDER' ? `Order Details: ${detailDialog.data?.order_number}` : `Item Details: ${detailDialog.data?.material_code}`}
+                </DialogTitle>
+                <DialogContent>
+                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        {detailDialog.type === 'ORDER' ? (
+                            <>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Customer Name</Typography>
+                                    <Typography variant="body2" fontWeight="bold">{detailDialog.data?.customer_name}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Customer PO Number</Typography>
+                                    <Typography variant="body2" fontWeight="bold">{detailDialog.data?.customer_po || 'N/A'}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Order Value</Typography>
+                                    <Typography variant="body2" fontWeight="bold">
+                                        {detailDialog.data?.total_value?.toLocaleString()} {detailDialog.data?.currency || 'USD'}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Tax Code</Typography>
+                                    <Typography variant="body2" fontWeight="bold">{detailDialog.data?.tax_code || 'EXEMPT'}</Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Divider sx={{ my: 1 }} />
+                                    <Typography variant="caption" color="text.secondary">Shipping Destination</Typography>
+                                    <Typography variant="body2" fontWeight="bold" sx={{ color: 'error.main' }}>
+                                        {detailDialog.data?.ship_to_destination}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        {detailDialog.data?.ship_to_address}
+                                    </Typography>
+                                </Grid>
+                            </>
+                        ) : (
+                            <>
+                                <Grid item xs={12}>
+                                    <Typography variant="caption" color="text.secondary">Material Name</Typography>
+                                    <Typography variant="body2" fontWeight="bold">{detailDialog.data?.material?.name || detailDialog.data?.material_name}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Quantity</Typography>
+                                    <Typography variant="body2" fontWeight="bold">{detailDialog.data?.quantity} {detailDialog.data?.uom}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Unit Price</Typography>
+                                    <Typography variant="body2" fontWeight="bold">{detailDialog.data?.unit_price?.toLocaleString()} {selectedOrder?.currency}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Line Total</Typography>
+                                    <Typography variant="body2" fontWeight="bold" color="primary.main">
+                                        {detailDialog.data?.total_price?.toLocaleString()} {selectedOrder?.currency}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Tax Info</Typography>
+                                    <Typography variant="body2" fontWeight="bold">{detailDialog.data?.tax_amount?.toLocaleString()} ({detailDialog.data?.tax_code})</Typography>
+                                </Grid>
+                            </>
+                        )}
+                    </Grid>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setDetailDialog({ ...detailDialog, open: false })} variant="contained">Close</Button>
                 </DialogActions>
             </Dialog>
         </Box>

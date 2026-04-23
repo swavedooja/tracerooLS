@@ -150,7 +150,7 @@ export default function MaterialForm() {
         tradeWidthMM: data.trade_width || '',
         tradeHeightMM: data.trade_height || '',
         tradeDimensionUom: data.dimensionUom || 'MM',
-        isPackaged: !!data.is_packaged,
+        isPackaged: !!data.isPackaged,
         isFragile: !!data.isFragile,
         isHighValue: !!data.isHighValue,
         isEnvSensitive: !!data.isEnvSensitive,
@@ -254,7 +254,20 @@ export default function MaterialForm() {
         isHazmat: form.handlingParameter.hazardousClass && form.handlingParameter.hazardousClass !== 'None',
         hazmatClass: form.handlingParameter.hazardousClass,
         packagingTypes: form.packagingTypes,
-        skus: form.skus
+        skus: form.skus,
+        countryOfOrigin: form.countryOfOrigin,
+        state: form.materialState,
+        class: form.materialClass,
+        storageType: form.storageType,
+        procurementType: form.procurementType,
+        vehicleType: form.vehicleType,
+        ean: form.materialEANupc,
+        upc: form.upc,
+        isPackaged: form.isPackaged,
+        isFragile: form.isFragile,
+        isHighValue: form.isHighValue,
+        isEnvSensitive: form.isEnvSensitive,
+        handlingParameter: form.handlingParameter
       };
 
       await MaterialsAPI.update(code, payload);

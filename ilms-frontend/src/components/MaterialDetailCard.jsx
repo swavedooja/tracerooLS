@@ -107,10 +107,32 @@ export default function MaterialDetailCard({ material, images = [] }) {
                    <Box sx={{ px: 2 }}>
                     <DetailRow label="Material Code" value={material?.materialCode} icon={<Settings />} />
                     <Divider />
-                    <DetailRow label="Base UOM" value={material?.baseUOM} icon={<Layers />} />
+                    <DetailRow label="Base UOM" value={material?.baseUOM || material?.baseUom} icon={<Layers />} />
                     <Divider />
                     <DetailRow label="Shelf Life" value={material?.shelfLifeDays ? `${material.shelfLifeDays} days` : null} icon={<ShoppingBag />} />
+                    <Divider />
+                    <DetailRow label="Dimensions" value={material?.lengthMM ? `${material.lengthMM}x${material.widthMM}x${material.heightMM} ${material.dimensionUom || 'MM'}` : (material?.length ? `${material.length}x${material.width}x${material.height} ${material.dimensionUom || 'MM'}` : null)} icon={<Settings />} />
+                    <Divider />
+                    <DetailRow label="Net Weight" value={material?.netWeightKg ? `${material.netWeightKg} ${material.netWeightUom || 'KG'}` : (material?.netWeight ? `${material.netWeight} ${material.weightUom || 'KG'}` : null)} icon={<Settings />} />
                    </Box>
+                </Paper>
+              </Grid>
+
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" fontWeight="700" sx={{ mb: 1, color: '#475569', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Warning fontSize="small" /> Identifiers
+                </Typography>
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, bgcolor: '#f8fafc' }}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">EAN/UPC</Typography>
+                      <Typography variant="body2" fontWeight="bold">{material?.materialEANupc || material?.ean || 'NA'}</Typography>
+                    </Grid>
+                    <Grid item xs={6}>
+                      <Typography variant="caption" color="text.secondary">UPC</Typography>
+                      <Typography variant="body2" fontWeight="bold">{material?.upc || 'NA'}</Typography>
+                    </Grid>
+                  </Grid>
                 </Paper>
               </Grid>
 
@@ -125,7 +147,9 @@ export default function MaterialDetailCard({ material, images = [] }) {
                        <Box>
                          <Typography variant="caption" color="text.secondary">Temp Range</Typography>
                          <Typography variant="body2" fontWeight="bold">
-                           {material?.handlingParameter?.temperatureMin ? `${material.handlingParameter.temperatureMin}°C - ${material.handlingParameter.temperatureMax}°C` : 'Ambient'}
+                           {material?.handlingParameter?.temperatureMin !== undefined && material?.handlingParameter?.temperatureMin !== '' 
+                              ? `${material.handlingParameter.temperatureMin}°C - ${material.handlingParameter.temperatureMax}°C` 
+                              : 'Ambient'}
                          </Typography>
                        </Box>
                     </Paper>
@@ -135,7 +159,7 @@ export default function MaterialDetailCard({ material, images = [] }) {
                        <Avatar sx={{ bgcolor: '#f0fdf4', color: '#15803d' }}><WaterDrop /></Avatar>
                        <Box>
                          <Typography variant="caption" color="text.secondary">Physical State</Typography>
-                         <Typography variant="body2" fontWeight="bold">{material?.materialState || 'NA'}</Typography>
+                         <Typography variant="body2" fontWeight="bold">{material?.materialState || material?.state || 'NA'}</Typography>
                        </Box>
                     </Paper>
                   </Grid>

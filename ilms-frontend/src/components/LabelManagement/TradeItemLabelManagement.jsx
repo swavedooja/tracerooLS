@@ -186,6 +186,22 @@ export default function TradeItemLabelManagement() {
         }
     };
 
+    const deleteHierarchy = async (e, id) => {
+        e.stopPropagation();
+        if (window.confirm('Are you sure you want to delete this entire hierarchy? This will also delete all associated levels.')) {
+            try {
+                await PackagingAPI.deleteHierarchy(id);
+                setHierarchies(prev => prev.filter(h => h.id !== id));
+                if (selectedHierarchy?.id === id) {
+                    setSelectedHierarchy(null);
+                }
+            } catch (e) {
+                console.error("Failed to delete hierarchy", e);
+                alert("Failed to delete hierarchy. Ensure no other data depends on it.");
+            }
+        }
+    };
+
     const handleLinkClick = (level) => {
         setEditingLevel(level);
         setDesignerOpen(true);
@@ -249,6 +265,13 @@ export default function TradeItemLabelManagement() {
                             >
                                 <Typography variant="caption" sx={{ mr: 1, color: 'text.secondary', fontWeight: 'bold' }}>{index + 1}.</Typography>
                                 <ListItemText primary={h.name} />
+                                <ListItemSecondaryAction>
+                                    <Tooltip title="Delete Hierarchy">
+                                        <IconButton edge="end" size="small" onClick={(e) => deleteHierarchy(e, h.id)} color="error" sx={{ opacity: 0.6, '&:hover': { opacity: 1 } }}>
+                                            <Delete fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </ListItemSecondaryAction>
                             </ListItem>
                         ))}
                     </List>

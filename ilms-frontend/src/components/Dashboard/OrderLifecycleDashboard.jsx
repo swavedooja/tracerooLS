@@ -5,7 +5,8 @@ import {
     List, ListItemButton, ListItemIcon, ListItemText,
     Chip, Divider, Stepper, Step, StepLabel,
     Breadcrumbs, Link, IconButton, Tooltip, Avatar,
-    Table, TableBody, TableCell, TableContainer, TableHead, TableRow
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+    Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack
 } from '@mui/material';
 import {
     History as HistoryIcon,
@@ -21,7 +22,9 @@ import {
     Assignment,
     Straighten,
     Thermostat,
-    GppGood
+    GppGood,
+    ShoppingCart,
+    Info
 } from '@mui/icons-material';
 import { ORDER_LIFECYCLE_DATA } from './orderDemoData';
 
@@ -59,6 +62,7 @@ export default function OrderLifecycleDashboard() {
 
     // Simple path tracking for the drill-down
     const [drillPath, setDrillPath] = useState([{ label: 'Order', data: ORDER_LIFECYCLE_DATA[0] }]);
+    const [detailDialog, setDetailDialog] = useState({ open: false, data: null, type: 'ORDER' });
 
     const handleOrderSelect = (order) => {
         setSelectedOrder(order);
@@ -67,6 +71,7 @@ export default function OrderLifecycleDashboard() {
     };
 
     const handleDrillDown = (child, label) => {
+        // If drilling from an order line, ensure the child has the resource data
         const newNode = { label, data: child };
         setDrillPath(prev => [...prev, newNode]);
         setSelectedNode(child);
@@ -153,13 +158,21 @@ export default function OrderLifecycleDashboard() {
                                         <Typography variant="h5" fontWeight="bold">{selectedOrder.order_number}</Typography>
                                     </Box>
                                     <Box sx={{ textAlign: 'right' }}>
-                                        <Chip 
-                                            label={selectedOrder.priority} 
-                                            color={selectedOrder.priority === 'CRITICAL' || selectedOrder.priority === 'EMERGENCY' ? 'error' : 'warning'}
-                                            size="small"
-                                            variant="outlined"
-                                        />
-                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                        <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mb: 1 }}>
+                                            <Chip 
+                                                label={selectedOrder.priority} 
+                                                color={selectedOrder.priority === 'CRITICAL' || selectedOrder.priority === 'EMERGENCY' ? 'error' : 'warning'}
+                                                size="small"
+                                                variant="outlined"
+                                            />
+                                            <IconButton size="small" color="primary" onClick={() => setDetailDialog({ open: true, data: selectedOrder, type: 'ORDER' })}>
+                                                <Info fontSize="small" />
+                                            </IconButton>
+                                        </Stack>
+                                        <Typography variant="h6" color="primary.main" fontWeight="bold">
+                                            {selectedOrder.total_value?.toLocaleString()} {selectedOrder.currency}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
                                             {new Date(selectedOrder.order_date).toLocaleDateString()}
                                         </Typography>
                                     </Box>
@@ -207,33 +220,50 @@ export default function OrderLifecycleDashboard() {
                                             RESOURCES AT THIS LEVEL
                                         </Typography>
                                         
-                                        {selectedNode.fulfillment || selectedNode.children ? (
+                                        { (selectedNode.lines || selectedNode.fulfillment || selectedNode.children || selectedNode.type === 'LINE_ITEM') ? (
                                             <Grid container spacing={2}>
-                                                {(selectedNode.fulfillment ? [selectedNode.fulfillment] : selectedNode.children).map((child) => (
-                                                    <Grid item xs={12} sm={6} key={child.serial || child.id}>
+                                                {(
+                                                    selectedNode.lines 
+                                                    ? selectedNode.lines.map(l => ({...l, type: 'LINE_ITEM', serial: l.material_code, id: l.id}))
+                                                    : (selectedNode.type === 'LINE_ITEM' 
+                                                        ? (selectedOrder.fulfillment ? [selectedOrder.fulfillment] : [])
+                                                        : (selectedNode.fulfillment ? [selectedNode.fulfillment] : (selectedNode.children || [])))
+                                                ).map((child) => (
+                                                    <Grid item xs={12} sm={6} key={child.serial || child.id || Math.random()}>
                                                         <Card 
                                                             variant="outlined" 
-                                                            onClick={() => handleDrillDown(child, child.type)}
+                                                            onClick={() => handleDrillDown(child, child.type || 'RESOURCE')}
                                                             sx={{ 
                                                                 cursor: 'pointer', 
                                                                 p: 2, 
                                                                 '&:hover': { bgcolor: 'action.hover', borderColor: 'primary.main' },
-                                                                transition: 'all 0.2s'
+                                                                transition: 'all 0.2s',
+                                                                border: '1px solid #e2e8f0',
+                                                                borderRadius: 2
                                                             }}
                                                         >
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                                <Avatar sx={{ bgcolor: 'primary.light', width: 40, height: 40 }}>
-                                                                    {child.type === 'UNIT' ? <QrCode2 /> : child.type === 'CASE' ? <Category /> : <Inventory2 />}
+                                                                <Avatar sx={{ bgcolor: child.type === 'LINE_ITEM' ? 'secondary.light' : 'primary.light', width: 40, height: 40 }}>
+                                                                    {child.type === 'LINE_ITEM' ? <Assignment /> : child.type === 'UNIT' ? <QrCode2 /> : child.type === 'CASE' ? <Category /> : <Inventory2 />}
                                                                 </Avatar>
                                                                 <Box sx={{ flex: 1 }}>
-                                                                    <Typography variant="body2" fontWeight="bold" fontFamily="monospace">
-                                                                        {child.serial || child.id}
+                                                                    <Typography variant="body2" fontWeight="bold" fontFamily={child.type === 'LINE_ITEM' ? 'inherit' : 'monospace'}>
+                                                                        {child.type === 'LINE_ITEM' ? (child.material_name || child.serial) : (child.serial || child.id)}
                                                                     </Typography>
                                                                     <Typography variant="caption" color="text.secondary">
-                                                                        {child.type} • {child.status}
+                                                                        {child.type} {child.quantity ? `• Qty: ${child.quantity} ${child.uom}` : child.status ? `• ${child.status}` : ''}
+                                                                        {child.type === 'LINE_ITEM' && ` • Value: ${child.total_price?.toLocaleString()} ${selectedOrder.currency}`}
                                                                     </Typography>
                                                                 </Box>
-                                                                {(child.children?.length > 0 || child.fulfillment) && <NavigateNext fontSize="small" color="action" />}
+                                                                {child.type === 'LINE_ITEM' && (
+                                                                    <IconButton size="small" onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        setDetailDialog({ open: true, data: child, type: 'LINE' });
+                                                                    }}>
+                                                                        <Info fontSize="small" sx={{ color: 'secondary.main' }} />
+                                                                    </IconButton>
+                                                                )}
+                                                                {(child.children?.length > 0 || child.fulfillment || child.type === 'LINE_ITEM') && <NavigateNext fontSize="small" color="action" />}
                                                             </Box>
                                                         </Card>
                                                     </Grid>
@@ -329,6 +359,92 @@ export default function OrderLifecycleDashboard() {
                     </Paper>
                 </Grid>
             </Grid>
+
+            {/* Commercial Details Dialog */}
+            <Dialog 
+                open={detailDialog.open} 
+                onClose={() => setDetailDialog({ ...detailDialog, open: false })}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+            >
+                <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, fontWeight: 'bold', color: 'primary.main' }}>
+                    {detailDialog.type === 'ORDER' ? <ShoppingCart /> : <Assignment />}
+                    {detailDialog.type === 'ORDER' ? `Order Commercial Data: ${detailDialog.data?.order_number}` : `Line Item Details: ${detailDialog.data?.material_code}`}
+                </DialogTitle>
+                <DialogContent>
+                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        {detailDialog.type === 'ORDER' ? (
+                            <>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Customer Name</Typography>
+                                    <Typography variant="body2" fontWeight="800">{detailDialog.data?.customer_name}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Customer PO Number</Typography>
+                                    <Typography variant="body2" fontWeight="800">{detailDialog.data?.customer_po || 'N/A'}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Order Total Value</Typography>
+                                    <Typography variant="body2" fontWeight="800" sx={{ color: 'primary.dark' }}>
+                                        {detailDialog.data?.total_value?.toLocaleString()} {detailDialog.data?.currency}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Main Tax Code</Typography>
+                                    <Typography variant="body2" fontWeight="800">{detailDialog.data?.tax_code || 'EXEMPT'}</Typography>
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Divider sx={{ my: 1 }} />
+                                    <Typography variant="caption" color="text.secondary">Ship-to Destination</Typography>
+                                    <Typography variant="body2" fontWeight="800" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                        <LocationOn fontSize="small" color="error" /> {detailDialog.data?.ship_to_destination}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ pl: 3, display: 'block' }}>
+                                        {detailDialog.data?.ship_to_address}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Tentative Delivery</Typography>
+                                    <Typography variant="body2" fontWeight="800">{new Date(detailDialog.data?.delivery_date).toLocaleDateString()}</Typography>
+                                </Grid>
+                            </>
+                        ) : (
+                            <>
+                                <Grid item xs={12}>
+                                    <Typography variant="caption" color="text.secondary">Material Specification</Typography>
+                                    <Typography variant="body2" fontWeight="800">{detailDialog.data?.material_name}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">HSN/Commodity Code</Typography>
+                                    <Typography variant="body2" fontWeight="800">{detailDialog.data?.hsn_code || '300410'}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Order Quantity</Typography>
+                                    <Typography variant="body2" fontWeight="800">{detailDialog.data?.quantity} {detailDialog.data?.uom}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Unit Price</Typography>
+                                    <Typography variant="body2" fontWeight="800">{detailDialog.data?.unit_price?.toLocaleString()} {selectedOrder.currency}</Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Line Total</Typography>
+                                    <Typography variant="body2" fontWeight="800" sx={{ color: 'primary.dark' }}>
+                                        {detailDialog.data?.total_price?.toLocaleString()} {selectedOrder.currency}
+                                    </Typography>
+                                </Grid>
+                                <Grid item xs={6}>
+                                    <Typography variant="caption" color="text.secondary">Tax Amount</Typography>
+                                    <Typography variant="body2" fontWeight="800">{detailDialog.data?.tax_amount?.toLocaleString()} {selectedOrder.currency} ({detailDialog.data?.tax_code})</Typography>
+                                </Grid>
+                            </>
+                        )}
+                    </Grid>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setDetailDialog({ ...detailDialog, open: false })} variant="contained" sx={{ borderRadius: 2 }}>Close</Button>
+                </DialogActions>
+            </Dialog>
         </Box>
     );
 }

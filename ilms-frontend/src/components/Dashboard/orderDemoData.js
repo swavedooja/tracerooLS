@@ -12,8 +12,15 @@ export const ORDER_LIFECYCLE_DATA = [
         order_date: daysAgo(10),
         status: 'SHIPPED',
         priority: 'HIGH',
+        total_value: 12500.00,
+        currency: 'USD',
+        ship_to_destination: 'Berlin Logistics Hub, Germany',
+        ship_to_address: 'Grenzallee 12, 12057 Berlin, Germany',
+        tax_code: 'VAT-EU-01',
+        customer_po: 'PO-GRP-8821',
+        delivery_date: daysAgo(5),
         lines: [
-            { id: 'L1', material_code: 'TAB-AM-250MG', material_name: 'Amoxicillin 250mg Tablets', quantity: 500, uom: 'Strips' }
+            { id: 'L1', material_code: 'TAB-AM-250MG', material_name: 'Amoxicillin 250mg Tablets', quantity: 500, uom: 'Strips', unit_price: 25.00, total_price: 12500.00, tax_code: 'VAT-EU-19', tax_amount: 2375.00, hsn_code: '300410' }
         ],
         fulfillment: {
             type: 'PALLET',
@@ -52,8 +59,15 @@ export const ORDER_LIFECYCLE_DATA = [
         order_date: daysAgo(5),
         status: 'DELIVERED',
         priority: 'CRITICAL',
+        total_value: 48000.00,
+        currency: 'INR',
+        ship_to_destination: 'Metro City Hospital, Mumbai',
+        ship_to_address: 'Annie Besant Rd, Worli, Mumbai 400018',
+        tax_code: 'GST-12',
+        customer_po: 'MH-PO-0092',
+        delivery_date: daysAgo(1),
         lines: [
-            { id: 'L1', material_code: 'SYR-PC-100ML', material_name: 'Insulin Glargine Cartridge', quantity: 200, uom: 'Cartridges' }
+            { id: 'L1', material_code: 'SYR-PC-100ML', material_name: 'Insulin Glargine Cartridge', quantity: 200, uom: 'Cartridges', unit_price: 240.00, total_price: 48000.00, tax_code: 'GST-LMS-12', tax_amount: 5760.00, hsn_code: '300431' }
         ],
         fulfillment: {
             type: 'CASE',
@@ -85,8 +99,15 @@ export const ORDER_LIFECYCLE_DATA = [
         order_date: hoursAgo(48),
         status: 'PROCESSING',
         priority: 'EMERGENCY',
+        total_value: 0.00,
+        currency: 'USD',
+        ship_to_destination: 'UNICEF Central Depot, Abuja',
+        ship_to_address: 'Plot 617/618 Central Area, Abuja, Nigeria',
+        tax_code: 'EXEMPT',
+        customer_po: 'UN-VAC-77',
+        delivery_date: daysAgo(-2),
         lines: [
-            { id: 'L1', material_code: 'VIAL-VC-10ML', material_name: 'mRNA Vaccine Vial', quantity: 100, uom: 'Vials' }
+            { id: 'L1', material_code: 'VIAL-VC-10ML', material_name: 'mRNA Vaccine Vial', quantity: 100, uom: 'Vials', unit_price: 0.00, total_price: 0.00, tax_code: 'NONE-GOVT', tax_amount: 0.00, hsn_code: '300220' }
         ],
         fulfillment: {
             type: 'CASE',
@@ -111,3 +132,4 @@ export const ORDER_LIFECYCLE_DATA = [
         ]
     }
 ];
+

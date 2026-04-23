@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Grid, Paper, TextField, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { Box, Button, Grid, Paper, TextField, Typography, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Tooltip, Select, MenuItem, InputLabel, FormControl, Chip } from '@mui/material';
 import { Add, Delete, Edit, Link as LinkIcon, Print, LocalDrink, Inventory, Layers, LocalShipping, WineBar, Spa, ViewColumn } from '@mui/icons-material';
 import { PackagingAPI } from '../../services/APIService';
 import LabelDesigner from '../LabelDesigner/LabelDesigner';
+import Packaging3DView from '../Packaging3DView';
 import { useNavigate } from 'react-router-dom';
+
+const inferShape = (name) => {
+    const n = (name || '').toLowerCase();
+    if (n.includes('pallet')) return 'Pallet';
+    if (n.includes('case') || n.includes('master') || n.includes('shipper') || n.includes('carton')) return 'Carton';
+    if (n.includes('vial') || n.includes('ampoule') || n.includes('bottle')) return 'Bottle';
+    if (n.includes('blister') || n.includes('flat')) return 'Box'; 
+    return 'Box';
+};
 
 const getIconForType = (typeStr) => {
     const t = typeStr?.toLowerCase() || '';
@@ -67,6 +77,7 @@ export default function ShippingLabelManagement() {
     const [allHierarchies, setAllHierarchies] = useState([]);
     const [selectedHierarchy, setSelectedHierarchy] = useState(null);
     const [levels, setLevels] = useState([]);
+    const [baseTradeLevels, setBaseTradeLevels] = useState([]);
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedBaseHierarchy, setSelectedBaseHierarchy] = useState('');
 
@@ -109,6 +120,21 @@ export default function ShippingLabelManagement() {
         try {
             const data = await PackagingAPI.getLevels(hid);
             setLevels(data);
+
+            // Fetch base trade hierarchy levels if this is a shipping hierarchy
+            const baseLevel = data.find(l => l.level_order === 1);
+            if (baseLevel && (baseLevel.level_name.startsWith('Base: ') || baseLevel.level_name.includes(' - '))) {
+                const tradeHName = baseLevel.level_name.startsWith('Base: ') 
+                    ? baseLevel.level_name.replace('Base: ', '')
+                    : baseLevel.level_name; // Fallback if name format changed
+                const tradeH = allHierarchies.find(h => h.name === tradeHName);
+                if (tradeH) {
+                    const tLevels = await PackagingAPI.getLevels(tradeH.id);
+                    setBaseTradeLevels(tLevels.sort((a,b) => a.level_order - b.level_order));
+                }
+            } else {
+                setBaseTradeLevels([]);
+            }
         } catch (e) { console.error(e); }
     };
 
@@ -158,6 +184,22 @@ export default function ShippingLabelManagement() {
         if (window.confirm('Delete this level?')) {
             await PackagingAPI.deleteLevel(id);
             loadLevels(selectedHierarchy.id);
+        }
+    };
+
+    const deleteHierarchy = async (e, id) => {
+        e.stopPropagation();
+        if (window.confirm('Are you sure you want to delete this entire hierarchy? This will also delete all associated levels.')) {
+            try {
+                await PackagingAPI.deleteHierarchy(id);
+                setHierarchies(prev => prev.filter(h => h.id !== id));
+                if (selectedHierarchy?.id === id) {
+                    setSelectedHierarchy(null);
+                }
+            } catch (e) {
+                console.error("Failed to delete hierarchy", e);
+                alert("Failed to delete hierarchy. Ensure no other data depends on it.");
+            }
         }
     };
 
@@ -224,6 +266,13 @@ export default function ShippingLabelManagement() {
                             >
                                 <Typography variant="caption" sx={{ mr: 1, color: 'text.secondary', fontWeight: 'bold' }}>{index + 1}.</Typography>
                                 <ListItemText primary={h.name} />
+                                <ListItemSecondaryAction>
+                                    <Tooltip title="Delete Hierarchy">
+                                        <IconButton edge="end" size="small" onClick={(e) => deleteHierarchy(e, h.id)} color="error" sx={{ opacity: 0.6, '&:hover': { opacity: 1 } }}>
+                                            <Delete fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                </ListItemSecondaryAction>
                             </ListItem>
                         ))}
                     </List>
@@ -268,48 +317,29 @@ export default function ShippingLabelManagement() {
                                 ))}
                             </List>
 
-                            {/* Graphical Representation Here */}
+                            {/* Packaging Hierarchy – 3D View */}
                             {levels.length > 0 && (
-                                <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                                    <Typography variant="subtitle2" sx={{ mb: 2 }}>Packaging Hierarchy Visualization</Typography>
-                                    <Box sx={{ display: 'flex', justifyContent: 'center', overflowX: 'auto', pb: 1, pt: 1 }}>
-                                        {[...levels].sort((a, b) => a.level_order - b.level_order).reduce((innerContent, level, idx, arr) => {
-                                            const depthIndex = arr.length - 1 - idx;
-                                            const bgColors = ['#e3f2fd', '#bbdefb', '#90caf9', '#64b5f6', '#42a5f5', '#2196f3', '#1e88e5'];
-                                            return (
-                                                <Paper elevation={3} sx={{ 
-                                                    p: 2, 
-                                                    m: 1, 
-                                                    bgcolor: bgColors[depthIndex % bgColors.length], 
-                                                    border: '2px dashed #1565c0', 
-                                                    borderRadius: 2,
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'center',
-                                                    width: innerContent ? 'calc(100% - 16px)' : 'auto',
-                                                    minWidth: 180,
-                                                    transition: 'transform 0.2s',
-                                                    '&:hover': { transform: 'scale(1.02)' }
-                                                }}>
-                                                    <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                                                        <Typography variant="caption" fontWeight="bold" color="primary.dark">Level {level.level_order}</Typography>
-                                                        {level.capacity > 1 && (
-                                                            <Box sx={{ bgcolor: 'rgba(255,255,255,0.7)', px: 1, py: 0.5, borderRadius: 1 }}>
-                                                                <Typography variant="caption" fontWeight="bold" color="primary.dark">Cap: {level.capacity}</Typography>
-                                                            </Box>
-                                                        )}
-                                                    </Box>
-                                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: innerContent ? 3 : 1 }}>
-                                                        {getIconForType(level.level_name)}
-                                                        <Typography variant="body1" fontWeight="bold" color="primary.dark" sx={{ textAlign: 'center', mt: 0.5 }}>
-                                                            {level.level_name.split(' (')[0]}
-                                                        </Typography>
-                                                    </Box>
-                                                    {innerContent}
-                                                </Paper>
-                                            )
-                                        }, null)}
+                                <Box sx={{ mt: 3, borderRadius: 2, overflow: 'hidden', border: '1px solid #e2e8f0', bgcolor: 'background.paper' }}>
+                                    <Box sx={{ p: 2, borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Typography variant="subtitle2" fontWeight="bold">Packaging Hierarchy Visualization</Typography>
+                                        <Chip size="small" label="Shipping + Trade Hierarchy" color="primary" variant="outlined" />
                                     </Box>
+                                    <Packaging3DView levels={[
+                                        // Outermost trade item level
+                                        ...(baseTradeLevels.length > 0 ? [{
+                                            levelIndex: 0,
+                                            levelName: baseTradeLevels[baseTradeLevels.length - 1].level_name?.split(' (')[0],
+                                            containedQuantity: baseTradeLevels[baseTradeLevels.length - 1].capacity || 1,
+                                            shapeType: inferShape(baseTradeLevels[baseTradeLevels.length - 1].level_name),
+                                        }] : []),
+                                        // All shipping levels (Level 2 onwards usually)
+                                        ...levels.filter(l => l.level_order > 1).map((l, idx) => ({
+                                            levelIndex: idx + 1,
+                                            levelName: l.level_name?.split(' (')[0] || `Shipping Level ${l.level_order}`,
+                                            containedQuantity: l.capacity || 1,
+                                            shapeType: inferShape(l.level_name),
+                                        }))
+                                    ]} />
                                 </Box>
                             )}
 

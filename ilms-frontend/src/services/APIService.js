@@ -76,10 +76,39 @@ export const MaterialsAPI = {
       dimension_uom: item.dimensionUom,
       is_hazmat: item.isHazmat,
       hazmat_class: item.hazmatClass,
-      un_number: item.unNumber
+      un_number: item.unNumber,
+      country_of_origin: item.countryOfOrigin,
+      state: item.state,
+      class: item.class,
+      storage_type: item.storageType,
+      procurement_type: item.procurementType,
+      vehicle_type: item.vehicleType,
+      ean: item.ean,
+      upc: item.upc,
+      is_packaged: item.isPackaged,
+      is_fragile: item.isFragile,
+      is_high_value: item.isHighValue,
+      is_env_sensitive: item.isEnvSensitive
     };
     const { data, error } = await supabase.from('materials').update(payload).eq('code', code).select().single();
     if (error) throw error;
+
+    // Handle handling_parameter update if present
+    if (item.handlingParameter) {
+        const hp = item.handlingParameter;
+        const hpPayload = {
+            temperature_min: hp.temperatureMin,
+            temperature_max: hp.temperatureMax,
+            humidity_min: hp.humidityMin,
+            humidity_max: hp.humidityMax,
+            hazardous_class: hp.hazardousClass,
+            epc_format: hp.epcFormat,
+            env_parameters: hp.envParameters,
+            precautions: hp.precautions
+        };
+        await supabase.from('handling_parameter').update(hpPayload).eq('material_code', code);
+    }
+
     return transformMaterial(data);
   },
   remove: async (code) => {
@@ -212,6 +241,10 @@ export const PackagingAPI = {
   },
   deleteLevel: async (id) => {
     const { error } = await supabase.from('packaging_level').delete().eq('id', id);
+    if (error) throw error;
+  },
+  deleteHierarchy: async (id) => {
+    const { error } = await supabase.from('packaging_hierarchy').delete().eq('id', id);
     if (error) throw error;
   }
 };
@@ -1154,10 +1187,36 @@ const transformMaterial = (m) => {
     status: m.status,
     images: images,
     mainImage: mainImage,
-    handlingParameter: m.handling_parameter?.[0] || {
-        temperatureMin: m.temp_min || '',
-        temperatureMax: m.temp_max || '',
-        hazardousClass: m.hazmat_class || ''
+    countryOfOrigin: m.country_of_origin,
+    state: m.state,
+    class: m.class,
+    storageType: m.storage_type,
+    procurementType: m.procurement_type,
+    vehicleType: m.vehicle_type,
+    ean: m.ean,
+    upc: m.upc,
+    isPackaged: m.is_packaged,
+    isFragile: m.is_fragile,
+    isHighValue: m.is_high_value,
+    isEnvSensitive: m.is_env_sensitive,
+    handlingParameter: m.handling_parameter?.[0] ? {
+        temperatureMin: m.handling_parameter[0].temperature_min,
+        temperatureMax: m.handling_parameter[0].temperature_max,
+        humidityMin: m.handling_parameter[0].humidity_min,
+        humidityMax: m.handling_parameter[0].humidity_max,
+        hazardousClass: m.handling_parameter[0].hazardous_class,
+        epcFormat: m.handling_parameter[0].epc_format,
+        envParameters: m.handling_parameter[0].env_parameters,
+        precautions: m.handling_parameter[0].precautions
+    } : {
+        temperatureMin: '',
+        temperatureMax: '',
+        humidityMin: '',
+        humidityMax: '',
+        hazardousClass: m.hazmat_class || '',
+        epcFormat: '',
+        envParameters: '',
+        precautions: ''
     }
   };
 };
