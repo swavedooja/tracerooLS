@@ -6,9 +6,9 @@ const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models
 
 export const GeminiService = {
   /**
-   * Sends a claim query to clAImax (Gemini)
+   * Sends a claim query to clAImax (Gemini) with optional file attachment
    */
-  chat: async (userMessage) => {
+  chat: async (userMessage, fileData = null) => {
     const systemInstruction = `You are a strict insurance claims adjudicator. You have the full policy document. For every claim query you MUST:
 1. Reference the exact policy section(s) by number/name.
 2. Clearly state a RECOMMENDATION for APPROVAL or REJECTION.
@@ -16,22 +16,36 @@ export const GeminiService = {
 
 Full Policy Document:`;
 
+    const parts = [
+      {
+        text: systemInstruction
+      },
+      {
+        inlineData: {
+          mimeType: "application/pdf",
+          data: POLICY_PDF_BASE64
+        }
+      }
+    ];
+
+    // Add user's uploaded file if present
+    if (fileData) {
+      parts.push({
+        inlineData: {
+          mimeType: fileData.mimeType,
+          data: fileData.data // base64 string
+        }
+      });
+    }
+
+    // Add user's text message
+    parts.push({
+      text: `User claim query: ${userMessage || "Please analyze the attached document for a potential claim."}`
+    });
+
     const body = {
       contents: [{
-        parts: [
-          {
-            text: systemInstruction
-          },
-          {
-            inlineData: {
-              mimeType: "application/pdf",
-              data: POLICY_PDF_BASE64
-            }
-          },
-          {
-            text: `User claim query: ${userMessage}`
-          }
-        ]
+        parts: parts
       }]
     };
 

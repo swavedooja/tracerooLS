@@ -8,7 +8,10 @@ import {
   Send as SendIcon, 
   Gavel as AdjudicatorIcon,
   Security as PolicyIcon,
-  RecordVoiceOver as ChatIcon
+  RecordVoiceOver as ChatIcon,
+  AttachFile as AttachFileIcon,
+  InsertDriveFile as FileIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GeminiService } from '../../services/GeminiService';
@@ -16,11 +19,48 @@ import { GeminiService } from '../../services/GeminiService';
 const ClaimaxChatbot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [attachedFile, setAttachedFile] = useState(null); // { name, mimeType, data (base64) }
   const [messages, setMessages] = useState([
-    { role: 'bot', content: 'I am clAImax, your strict insurance claims adjudicator. Please provide your claim details (Date of accident, Amount, Policy ID, and Description) for review against the Apex Auto Insurance policy.' }
+    { role: 'bot', content: 'I am clAImax, your strict insurance claims adjudicator. Please provide your claim details or upload a document (PDF, JPEG, PNG) for review against the Apex Auto Insurance policy.' }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) {
+      alert('Please upload a PDF, JPEG, or PNG file.');
+      return;
+    }
+
+    try {
+      const base64 = await fileToBase64(file);
+      setAttachedFile({
+        name: file.name,
+        mimeType: file.type,
+        data: base64
+      });
+    } catch (error) {
+      console.error('File conversion error:', error);
+    }
+  };
+
+  const removeFile = () => {
+    setAttachedFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -33,15 +73,20 @@ const ClaimaxChatbot = () => {
   }, [messages, isOpen]);
 
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+    if ((!input.trim() && !attachedFile) || isLoading) return;
 
     const userMsg = input.trim();
+    const fileData = attachedFile;
+    
     setInput('');
-    setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
+    setAttachedFile(null);
+    
+    const displayMsg = userMsg + (fileData ? `\n[Attached: ${fileData.name}]` : '');
+    setMessages(prev => [...prev, { role: 'user', content: displayMsg }]);
     setIsLoading(true);
 
     try {
-      const botResponse = await GeminiService.chat(userMsg);
+      const botResponse = await GeminiService.chat(userMsg, fileData);
       setMessages(prev => [...prev, { role: 'bot', content: botResponse }]);
     } catch (error) {
       setMessages(prev => [...prev, { role: 'bot', content: "I encountered an error while accessing the policy database. Please try again." }]);
@@ -188,10 +233,41 @@ const ClaimaxChatbot = () => {
 
               {/* Input Area */}
               <Box sx={{ p: 3, bgcolor: '#FFFFFF', borderTop: `1px solid #ECEFF1` }}>
+                {attachedFile && (
+                  <Box sx={{ 
+                    mb: 2, 
+                    p: 1, 
+                    bgcolor: '#F1F5F9', 
+                    borderRadius: '8px', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between',
+                    border: `1px solid ${colors.accent}`
+                  }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <FileIcon sx={{ color: colors.primary, fontSize: 20 }} />
+                      <Typography variant="caption" sx={{ fontWeight: 600, color: colors.text }}>
+                        {attachedFile.name}
+                      </Typography>
+                    </Box>
+                    <IconButton size="small" onClick={removeFile}>
+                      <DeleteIcon fontSize="small" sx={{ color: '#EF4444' }} />
+                    </IconButton>
+                  </Box>
+                )}
+                
+                <input
+                  type="file"
+                  hidden
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept=".pdf,.jpg,.jpeg,.png"
+                />
+
                 <TextField
                   fullWidth
                   variant="outlined"
-                  placeholder="Describe your claim query..."
+                  placeholder="Describe your claim or upload a doc..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSend()}
@@ -199,15 +275,25 @@ const ClaimaxChatbot = () => {
                   multiline
                   maxRows={4}
                   InputProps={{
+                    startAdornment: (
+                      <IconButton 
+                        size="small" 
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isLoading}
+                        sx={{ mr: 1, color: colors.accent }}
+                      >
+                        <AttachFileIcon fontSize="small" />
+                      </IconButton>
+                    ),
                     endAdornment: (
                       <IconButton 
                         onClick={handleSend} 
                         size="medium"
-                        disabled={!input.trim() || isLoading}
+                        disabled={(!input.trim() && !attachedFile) || isLoading}
                         sx={{ 
-                          bgcolor: input.trim() ? colors.secondary : 'transparent',
-                          color: input.trim() ? colors.primary : 'inherit',
-                          '&:hover': { bgcolor: input.trim() ? '#C49F27' : 'transparent' },
+                          bgcolor: (input.trim() || attachedFile) ? colors.secondary : 'transparent',
+                          color: (input.trim() || attachedFile) ? colors.primary : 'inherit',
+                          '&:hover': { bgcolor: (input.trim() || attachedFile) ? '#C49F27' : 'transparent' },
                           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                           ml: 1
                         }}
