@@ -51,6 +51,8 @@ import Dashboard from './components/Dashboard.jsx';
 import DashboardMetrics from './components/Dashboard/DashboardMetrics.jsx';
 import OrderLifecycleDashboard from './components/Dashboard/OrderLifecycleDashboard.jsx';
 import ShipmentCreate from './components/Shipping/ShipmentCreate';
+import ClaimsDashboard from './components/MedicalClaims/ClaimsDashboard';
+import ClaimDetail from './components/MedicalClaims/ClaimDetail';
 import Login from './components/Login';
 import Footer from './components/Footer';
 import ClaimaxChatbot from './components/Chat/ClaimaxChatbot';
@@ -333,6 +335,8 @@ export default function App() {
           <Route path="/packing" element={<PackingDashboard />} />
           <Route path="/packing/aggregation" element={<AggregationStation />} />
           <Route path="/shipping" element={<ShipmentCreate />} />
+          <Route path="/medical-claims" element={<ClaimsDashboard />} />
+          <Route path="/medical-claims/:id" element={<ClaimDetail />} />
           <Route path="/trace" element={<TrackTraceDashboard />} />
           <Route path="/chaintrack" element={<ChainTrackDashboard />} />
           <Route path="/mobile-wireframe" element={<MobileApp />} />
