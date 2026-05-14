@@ -274,14 +274,77 @@ export const generatePackagingHierarchy = () => {
         ]),
         pallets: [
             {
-                id: 'PLT-PH-001',
+                id: 'PLT-NOV-8821',
                 serial: 'PLT-NOV-8821',
                 sscc: generateSSCC('0395600', 2000101),
                 type: 'PALLET',
                 status: 'DELIVERED',
                 weight: '180 KG',
-                itemCount: 2000,
-                cases: []
+                dimensions: '120x100x150 cm',
+                caseCount: 2,
+                itemCount: 24,
+                events: generateEvents('PLT-NOV-8821', [
+                    { type: 'CREATED', time: daysAgo(8), location: 'Mumbai Plant', user: 'Packer Lead', notes: 'Pallet assembled' },
+                    { type: 'AGGREGATED', time: daysAgo(7), location: 'Staging Area', locationCode: 'MUM-PLANT', user: 'Packer Lead', notes: 'Cases loaded onto pallet' },
+                    { type: 'WRAPPED', time: daysAgo(7), location: 'Wrapping Station', locationCode: 'MUM-PLANT', user: 'Operator', notes: 'Stretch wrap applied' }
+                ]),
+                cases: [
+                    {
+                        id: 'CASE-SOLN-101',
+                        serial: 'CASE-SOLN-101',
+                        sscc: generateSSCC('0395600', 3000101),
+                        gtin: generateGTIN('890123456', 'SOLN'),
+                        type: 'CASE',
+                        status: 'DELIVERED',
+                        batchId: 'BATCH-SOLN-2024-A',
+                        itemCount: 12,
+                        mfgDate: daysAgo(20),
+                        expiryDate: daysAgo(-700),
+                        events: generateEvents('CASE-SOLN-101', [
+                            { type: 'CREATED', time: daysAgo(10), location: 'Packing Station', user: 'Packer Vijay', notes: 'Box created' },
+                            { type: 'ITEMS_PACKED', time: daysAgo(10), location: 'Packing Station', user: 'Packer Vijay', notes: '12 items packed' },
+                            { type: 'SEALED', time: daysAgo(10), location: 'Packing Station', user: 'Packer Vijay', notes: 'Box sealed and labeled' }
+                        ]),
+                        items: Array.from({ length: 12 }, (_, i) => ({
+                            id: `SOLN-SN-${1000 + i}`,
+                            serial: `SOLN-SN-${1000 + i}`,
+                            gtin: generateGTIN('890123456', 'SOLN'),
+                            type: 'ITEM',
+                            status: 'DELIVERED',
+                            material: { name: 'Solu-Medrol 1g Injection', code: 'SOLN001', category: 'Injectables' },
+                            batchId: 'BATCH-SOLN-2024-A',
+                            mfgDate: daysAgo(20),
+                            expiryDate: daysAgo(-700),
+                            qcStatus: 'PASS',
+                            events: generateItemEvents(`SOLN-SN-${1000 + i}`, daysAgo(20))
+                        }))
+                    },
+                    {
+                        id: 'CASE-SOLN-102',
+                        serial: 'CASE-SOLN-102',
+                        sscc: generateSSCC('0395600', 3000102),
+                        gtin: generateGTIN('890123456', 'SOLN'),
+                        type: 'CASE',
+                        status: 'DELIVERED',
+                        batchId: 'BATCH-SOLN-2024-A',
+                        itemCount: 12,
+                        mfgDate: daysAgo(20),
+                        expiryDate: daysAgo(-700),
+                        items: Array.from({ length: 12 }, (_, i) => ({
+                            id: `SOLN-SN-${1012 + i}`,
+                            serial: `SOLN-SN-${1012 + i}`,
+                            gtin: generateGTIN('890123456', 'SOLN'),
+                            type: 'ITEM',
+                            status: 'DELIVERED',
+                            material: { name: 'Solu-Medrol 1g Injection', code: 'SOLN001', category: 'Injectables' },
+                            batchId: 'BATCH-SOLN-2024-A',
+                            mfgDate: daysAgo(20),
+                            expiryDate: daysAgo(-700),
+                            qcStatus: 'PASS',
+                            events: generateItemEvents(`SOLN-SN-${1012 + i}`, daysAgo(20))
+                        }))
+                    }
+                ]
             }
         ]
     });
