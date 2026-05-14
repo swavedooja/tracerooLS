@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Box, Paper, Typography, Grid, Card, CardContent,
@@ -32,20 +33,26 @@ const AnimatedBox = motion(Box);
 const AnimatedCard = motion(Card);
 
 const STATUS_COLORS = {
+    'CLOSED': { bg: '#E8F5E9', color: '#2E7D32', icon: CheckCircle },
+    'IN_PROGRESS': { bg: '#FFF3E0', color: '#E65100', icon: LocalShipping },
+    'CREATED': { bg: '#E3F2FD', color: '#1976D2', icon: Assignment },
+    // Keeping some old ones for line item status if needed
     'SHIPPED': { bg: '#E3F2FD', color: '#1976D2', icon: LocalShipping },
     'DELIVERED': { bg: '#E8F5E9', color: '#2E7D32', icon: CheckCircle },
-    'IN_TRANSIT': { bg: '#FFF3E0', color: '#E65100', icon: LocalShipping },
-    'PROCESSING': { bg: '#F3E5F5', color: '#7B1FA2', icon: Schedule },
     'PACKED': { bg: '#E0F2F1', color: '#00695C', icon: Inventory2 }
 };
 
 const EVENT_ICONS = {
     'ORDER_CREATED': Assignment,
-    'ORDER_CONFIRMED': GppGood,
-    'FULFILLMENT_STARTED': Inventory2,
-    'PACKED_&_AGGREGATED': Category,
+    'IN_PROGRESS': Schedule,
+    'CLOSED': CheckCircle,
+    'ORDERED': ShoppingCart,
+    'PROCESSED': GppGood,
+    'PACKED': Inventory2,
     'SHIPPED': LocalShipping,
     'DELIVERED': CheckCircle,
+    'PICKED_UP': LocalShipping,
+    'IN_TRANSIT': LocalShipping,
     'QC_PASS': GppGood,
     'QC_STERILITY_PASS': GppGood,
     'MANUFACTURED': Category,
@@ -57,6 +64,7 @@ const EVENT_ICONS = {
 };
 
 export default function OrderLifecycleDashboard() {
+    const navigate = useNavigate();
     const [selectedOrder, setSelectedOrder] = useState(ORDER_LIFECYCLE_DATA[0]);
     const [selectedNode, setSelectedNode] = useState(ORDER_LIFECYCLE_DATA[0]);
 
@@ -178,8 +186,8 @@ export default function OrderLifecycleDashboard() {
                                     </Box>
                                 </Box>
                                 
-                                <Stepper activeStep={selectedOrder.status === 'DELIVERED' ? 4 : 2} alternativeLabel size="small">
-                                    {['Ordered', 'Processing', 'Packed', 'Shipped', 'Delivered'].map((label) => (
+                                <Stepper activeStep={selectedOrder.status === 'CLOSED' ? 2 : (selectedOrder.status === 'IN_PROGRESS' ? 1 : 0)} alternativeLabel size="small">
+                                    {['Created', 'In Progress', 'Closed'].map((label) => (
                                         <Step key={label}>
                                             <StepLabel>{label}</StepLabel>
                                         </Step>
@@ -220,39 +228,51 @@ export default function OrderLifecycleDashboard() {
                                             RESOURCES AT THIS LEVEL
                                         </Typography>
                                         
-                                        { (selectedNode.lines || selectedNode.fulfillment || selectedNode.children || selectedNode.type === 'LINE_ITEM') ? (
+                                        { (selectedNode.lines || selectedNode.shipments || selectedNode.children || selectedNode.type === 'SHIPMENT') ? (
                                             <Grid container spacing={2}>
                                                 {(
                                                     selectedNode.lines 
                                                     ? selectedNode.lines.map(l => ({...l, type: 'LINE_ITEM', serial: l.material_code, id: l.id}))
-                                                    : (selectedNode.type === 'LINE_ITEM' 
-                                                        ? (selectedOrder.fulfillment ? [selectedOrder.fulfillment] : [])
-                                                        : (selectedNode.fulfillment ? [selectedNode.fulfillment] : (selectedNode.children || [])))
+                                                    : (selectedNode.shipments 
+                                                        ? selectedNode.shipments.map(s => ({...s, type: 'SHIPMENT', id: s.id}))
+                                                        : (selectedNode.children || []))
                                                 ).map((child) => (
                                                     <Grid item xs={12} sm={6} key={child.serial || child.id || Math.random()}>
                                                         <Card 
                                                             variant="outlined" 
-                                                            onClick={() => handleDrillDown(child, child.type || 'RESOURCE')}
+                                                            onClick={() => {
+                                                                if (child.type === 'SHIPMENT') {
+                                                                    navigate(`/trace?id=${child.serial}`);
+                                                                } else {
+                                                                    handleDrillDown(child, child.type || 'RESOURCE');
+                                                                }
+                                                            }}
                                                             sx={{ 
                                                                 cursor: 'pointer', 
                                                                 p: 2, 
                                                                 '&:hover': { bgcolor: 'action.hover', borderColor: 'primary.main' },
                                                                 transition: 'all 0.2s',
                                                                 border: '1px solid #e2e8f0',
-                                                                borderRadius: 2
+                                                                borderRadius: 2,
+                                                                position: 'relative',
+                                                                overflow: 'hidden'
                                                             }}
                                                         >
+                                                            {child.type === 'SHIPMENT' && (
+                                                                <Box sx={{ position: 'absolute', top: 0, right: 0, bgcolor: 'primary.main', color: 'white', px: 1, py: 0.25, borderBottomLeftRadius: 8 }}>
+                                                                    <Typography variant="caption" fontWeight="bold">SHIPMENT</Typography>
+                                                                </Box>
+                                                            )}
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                                                                <Avatar sx={{ bgcolor: child.type === 'LINE_ITEM' ? 'secondary.light' : 'primary.light', width: 40, height: 40 }}>
-                                                                    {child.type === 'LINE_ITEM' ? <Assignment /> : child.type === 'UNIT' ? <QrCode2 /> : child.type === 'CASE' ? <Category /> : <Inventory2 />}
+                                                                <Avatar sx={{ bgcolor: child.type === 'LINE_ITEM' ? 'secondary.light' : child.type === 'SHIPMENT' ? 'info.light' : 'primary.light', width: 40, height: 40 }}>
+                                                                    {child.type === 'LINE_ITEM' ? <Assignment /> : child.type === 'SHIPMENT' ? <LocalShipping /> : child.type === 'UNIT' ? <QrCode2 /> : child.type === 'CASE' ? <Category /> : <Inventory2 />}
                                                                 </Avatar>
                                                                 <Box sx={{ flex: 1 }}>
                                                                     <Typography variant="body2" fontWeight="bold" fontFamily={child.type === 'LINE_ITEM' ? 'inherit' : 'monospace'}>
                                                                         {child.type === 'LINE_ITEM' ? (child.material_name || child.serial) : (child.serial || child.id)}
                                                                     </Typography>
                                                                     <Typography variant="caption" color="text.secondary">
-                                                                        {child.type} {child.quantity ? `• Qty: ${child.quantity} ${child.uom}` : child.status ? `• ${child.status}` : ''}
-                                                                        {child.type === 'LINE_ITEM' && ` • Value: ${child.total_price?.toLocaleString()} ${selectedOrder.currency}`}
+                                                                        {child.type === 'LINE_ITEM' ? `Qty: ${child.quantity} ${child.uom} • Value: ${child.total_price?.toLocaleString()} ${selectedOrder.currency}` : child.carrier ? `${child.carrier} • ${child.status}` : child.status || child.type}
                                                                     </Typography>
                                                                 </Box>
                                                                 {child.type === 'LINE_ITEM' && (
@@ -263,7 +283,7 @@ export default function OrderLifecycleDashboard() {
                                                                         <Info fontSize="small" sx={{ color: 'secondary.main' }} />
                                                                     </IconButton>
                                                                 )}
-                                                                {(child.children?.length > 0 || child.fulfillment || child.type === 'LINE_ITEM') && <NavigateNext fontSize="small" color="action" />}
+                                                                {(child.shipments?.length > 0 || child.children?.length > 0 || child.type === 'LINE_ITEM') && <NavigateNext fontSize="small" color="action" />}
                                                             </Box>
                                                         </Card>
                                                     </Grid>
@@ -271,19 +291,33 @@ export default function OrderLifecycleDashboard() {
                                             </Grid>
                                         ) : (
                                             <Box sx={{ mt: 4, textAlign: 'center' }}>
-                                                <Avatar sx={{ bgcolor: 'success.light', width: 64, height: 64, mx: 'auto', mb: 2 }}>
-                                                    <QrCode2 fontSize="large" />
+                                                <Avatar sx={{ bgcolor: selectedNode.type === 'SHIPMENT' ? 'info.light' : 'success.light', width: 64, height: 64, mx: 'auto', mb: 2 }}>
+                                                    {selectedNode.type === 'SHIPMENT' ? <LocalShipping fontSize="large" /> : <QrCode2 fontSize="large" />}
                                                 </Avatar>
-                                                <Typography variant="h6">End of Hierarchy</Typography>
+                                                <Typography variant="h6">{selectedNode.type === 'SHIPMENT' ? 'Shipment Details' : 'End of Hierarchy'}</Typography>
                                                 <Typography variant="body2" color="text.secondary">
-                                                    You are viewing an individual serialized unit.
+                                                    {selectedNode.type === 'SHIPMENT' 
+                                                        ? `Viewing shipment ${selectedNode.serial}`
+                                                        : 'You are viewing an individual serialized unit.'
+                                                    }
                                                 </Typography>
                                                 
+                                                {selectedNode.type === 'SHIPMENT' && (
+                                                    <Button 
+                                                        variant="contained" 
+                                                        startIcon={<Timeline />}
+                                                        onClick={() => navigate(`/trace?id=${selectedNode.serial}`)}
+                                                        sx={{ mt: 3, borderRadius: 2 }}
+                                                    >
+                                                        Track in Trace Dashboard
+                                                    </Button>
+                                                )}
+
                                                 <Divider sx={{ my: 3 }} />
                                                 <Grid container spacing={2} sx={{ textAlign: 'left' }}>
                                                     <Grid item xs={6}>
-                                                        <Typography variant="caption" color="text.secondary">Serial Number</Typography>
-                                                        <Typography variant="body2" fontWeight="bold">{selectedNode.serial}</Typography>
+                                                        <Typography variant="caption" color="text.secondary">{selectedNode.type === 'SHIPMENT' ? 'Carrier' : 'Serial Number'}</Typography>
+                                                        <Typography variant="body2" fontWeight="bold">{selectedNode.type === 'SHIPMENT' ? selectedNode.carrier : selectedNode.serial}</Typography>
                                                     </Grid>
                                                     <Grid item xs={6}>
                                                         <Typography variant="caption" color="text.secondary">Status</Typography>

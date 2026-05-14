@@ -7,129 +7,154 @@ const hoursAgo = (hours) => new Date(Date.now() - hours * 60 * 60 * 1000).toISOS
 export const ORDER_LIFECYCLE_DATA = [
     {
         id: 'SO-PH-001',
-        order_number: 'SO-AMOX-2024-001',
-        customer_name: 'Global Pharma Distributors Inc.',
+        order_number: 'SO-SOLN-2024-001',
+        customer_name: 'Novartis Global Distribution',
         order_date: daysAgo(10),
-        status: 'SHIPPED',
+        status: 'IN_PROGRESS',
         priority: 'HIGH',
-        total_value: 12500.00,
+        total_value: 45000.00,
         currency: 'USD',
-        ship_to_destination: 'Berlin Logistics Hub, Germany',
-        ship_to_address: 'Grenzallee 12, 12057 Berlin, Germany',
-        tax_code: 'VAT-EU-01',
-        customer_po: 'PO-GRP-8821',
-        delivery_date: daysAgo(5),
+        ship_to_destination: 'Zurich Cold Storage, Switzerland',
+        ship_to_address: 'Industriestrasse 25, 8005 Zürich, Switzerland',
+        tax_code: 'VAT-CH-7.7',
+        customer_po: 'PO-NOV-8821',
+        delivery_date: daysAgo(2),
         lines: [
-            { id: 'L1', material_code: 'TAB-AM-250MG', material_name: 'Amoxicillin 250mg Tablets', quantity: 500, uom: 'Strips', unit_price: 25.00, total_price: 12500.00, tax_code: 'VAT-EU-19', tax_amount: 2375.00, hsn_code: '300410' }
+            { 
+                id: 'L1', 
+                material_code: 'SOLN001', 
+                material_name: 'Solu-Medrol 1g Injection', 
+                quantity: 2000, 
+                uom: 'Vials', 
+                unit_price: 22.50, 
+                total_price: 45000.00, 
+                hsn_code: '300410',
+                events: [
+                    { type: 'ORDERED', time: daysAgo(10), location: 'Client ERP', user: 'Auto-Procure', notes: 'Electronic Data Interchange (EDI) received' },
+                    { type: 'PROCESSED', time: daysAgo(9), location: 'Supply Chain Hub', user: 'Maria S.', notes: 'Inventory allocated from Batch B-9921' },
+                    { type: 'PACKED', time: daysAgo(8), location: 'Sterile Packing Zone 4', user: 'Operator X', notes: 'Packed in vacuum-sealed thermo-shippers' },
+                    { type: 'SHIPPED', time: daysAgo(7), location: 'Dispatch Dock A', user: 'Logistics Lead', notes: 'Handed over to Cold-Chain Express' },
+                    { type: 'DELIVERED', time: daysAgo(3), location: 'Zurich Hub', user: 'Receiver Y', notes: 'Temperature logger verified: 4.2°C' }
+                ],
+                shipments: [
+                    {
+                        id: 'SHIP-SOLN-001A',
+                        serial: 'SH-NOV-99102',
+                        type: 'SHIPMENT',
+                        status: 'DELIVERED',
+                        carrier: 'DHL Medical Express',
+                        tracking_url: '/trace?id=SH-NOV-99102',
+                        events: [
+                            { type: 'PICKED_UP', time: daysAgo(7), location: 'Mumbai Dispatch', notes: 'GPS Tracker Activated' },
+                            { type: 'IN_TRANSIT', time: daysAgo(5), location: 'Frankfurt Airport', notes: 'Clearing Customs' },
+                            { type: 'DELIVERED', time: daysAgo(3), location: 'Zurich Depot', notes: 'POD Signed by Dr. Klaus' }
+                        ]
+                    },
+                    {
+                        id: 'SHIP-SOLN-001B',
+                        serial: 'SH-NOV-99103',
+                        type: 'SHIPMENT',
+                        status: 'IN_TRANSIT',
+                        carrier: 'DHL Medical Express',
+                        tracking_url: '/trace?id=SH-NOV-99103',
+                        events: [
+                            { type: 'PICKED_UP', time: daysAgo(7), location: 'Mumbai Dispatch', notes: 'GPS Tracker Activated' },
+                            { type: 'IN_TRANSIT', time: daysAgo(4), location: 'Dubai Hub', notes: 'Delayed due to flight schedule' }
+                        ]
+                    }
+                ]
+            }
         ],
-        fulfillment: {
-            type: 'PALLET',
-            serial: 'PLT-AMOX-001',
-            status: 'IN_TRANSIT',
-            children: Array.from({ length: 5 }, (_, i) => ({
-                id: `CS-AM-${i+1}`,
-                serial: `CASE-AMOX-100${i+1}`,
-                type: 'CASE',
-                status: 'IN_TRANSIT',
-                children: Array.from({ length: 10 }, (_, j) => ({
-                    id: `IT-AM-${i+1}-${j+1}`,
-                    serial: `SN-AM-250-00${i*10 + j + 1}`,
-                    type: 'UNIT',
-                    status: 'SHIPPED',
-                    events: [
-                        { type: 'MANUFACTURED', time: daysAgo(20), location: 'Strategic Pharma Site - Mumbai', user: 'System', notes: 'Batch B-9982' },
-                        { type: 'QC_PASS', time: daysAgo(19), location: 'QC Lab 4', user: 'Analyst Sarah', notes: 'Purity 99.8%' },
-                        { type: 'PACKED', time: daysAgo(12), location: 'Primary Packing Line 2', user: 'Operator Amit', notes: 'Blister packed' }
-                    ]
-                }))
-            }))
-        },
         events: [
-            { type: 'ORDER_CREATED', time: daysAgo(10), location: 'Sales Office', user: 'John Sales', notes: 'Export order for 500 strips' },
-            { type: 'ORDER_CONFIRMED', time: daysAgo(9), location: 'Finance Hub', user: 'Alice Fin', notes: 'Credit check passed' },
-            { type: 'FULFILLMENT_STARTED', time: daysAgo(8), location: 'Warehouse - Mumbai', user: 'WMS System', notes: 'Picking started' },
-            { type: 'PACKED_&_AGGREGATED', time: daysAgo(7), location: 'Packing Station', user: 'Operator Vijay', notes: 'Aggregated to Pallet PLT-AMOX-001' },
-            { type: 'SHIPPED', time: daysAgo(3), location: 'Dispatch Dock', user: 'Logistics Manager', notes: 'Consignment handed to BlueDart' }
+            { type: 'ORDER_CREATED', time: daysAgo(10), location: 'Customer Portal', user: 'Global Procurement', notes: 'Official Purchase Order Received' },
+            { type: 'IN_PROGRESS', time: daysAgo(8), location: 'Manufacturing Site', user: 'Ops Manager', notes: 'Fulfillment sequence initiated' }
         ]
     },
     {
         id: 'SO-PH-002',
         order_number: 'SO-INS-2024-002',
-        customer_name: 'Metro Health Hospital Group',
-        order_date: daysAgo(5),
-        status: 'DELIVERED',
+        customer_name: 'Mayo Clinic Healthcare',
+        order_date: daysAgo(15),
+        status: 'CLOSED',
         priority: 'CRITICAL',
-        total_value: 48000.00,
-        currency: 'INR',
-        ship_to_destination: 'Metro City Hospital, Mumbai',
-        ship_to_address: 'Annie Besant Rd, Worli, Mumbai 400018',
-        tax_code: 'GST-12',
-        customer_po: 'MH-PO-0092',
-        delivery_date: daysAgo(1),
+        total_value: 120000.00,
+        currency: 'USD',
+        ship_to_destination: 'Rochester Medical Center, MN',
+        ship_to_address: '200 First St. SW, Rochester, MN 55905',
+        tax_code: 'US-EXEMPT',
+        customer_po: 'MC-PO-5512',
+        delivery_date: daysAgo(5),
         lines: [
-            { id: 'L1', material_code: 'SYR-PC-100ML', material_name: 'Insulin Glargine Cartridge', quantity: 200, uom: 'Cartridges', unit_price: 240.00, total_price: 48000.00, tax_code: 'GST-LMS-12', tax_amount: 5760.00, hsn_code: '300431' }
-        ],
-        fulfillment: {
-            type: 'CASE',
-            serial: 'CASE-INS-5001',
-            status: 'DELIVERED',
-            children: Array.from({ length: 20 }, (_, i) => ({
-                id: `IT-INS-${i+1}`,
-                serial: `SN-INS-100-${String(i+1).padStart(3, '0')}`,
-                type: 'UNIT',
-                status: 'DELIVERED',
+            { 
+                id: 'L2', 
+                material_code: 'INS-GL-10', 
+                material_name: 'Insulin Glargine 100 U/mL', 
+                quantity: 500, 
+                uom: 'Kits', 
+                unit_price: 240.00, 
+                total_price: 120000.00, 
+                hsn_code: '300431',
                 events: [
-                    { type: 'COLD_CHAIN_ENTRY', time: daysAgo(15), location: 'Sterile Manufacturing', user: 'Env Monitor', notes: 'Temp: 4.2°C' },
-                    { type: 'QC_STERILITY_PASS', time: daysAgo(14), location: 'Microbiology Lab', user: 'Dr. Gupta', notes: 'Negative for microbes' },
-                    { type: 'PACKED', time: daysAgo(6), location: 'Cold Packing Area', user: 'Operator Neha', notes: 'Packed with phase change materials' }
+                    { type: 'ORDERED', time: daysAgo(15), location: 'Mayo Procurement', notes: 'Emergency Stock Replenishment' },
+                    { type: 'PROCESSED', time: daysAgo(14), location: 'Global Logistics', notes: 'Priority-1 processing' },
+                    { type: 'PACKED', time: daysAgo(13), location: 'Cold Zone', notes: 'Dry ice packaging' },
+                    { type: 'SHIPPED', time: daysAgo(12), location: 'Airport Dispatch', notes: 'Charter Flight CF-992' },
+                    { type: 'DELIVERED', time: daysAgo(6), location: 'Mayo Hospital', notes: 'Pharmacy receipt confirmed' }
+                ],
+                shipments: [
+                    {
+                        id: 'SHIP-INS-002',
+                        serial: 'SH-MAYO-44122',
+                        type: 'SHIPMENT',
+                        status: 'DELIVERED',
+                        carrier: 'FedEx Clinical Services',
+                        tracking_url: '/trace?id=SH-MAYO-44122',
+                        events: [
+                            { type: 'DELIVERED', time: daysAgo(6), location: 'Rochester, MN', notes: 'Signature: J. Doe' }
+                        ]
+                    }
                 ]
-            }))
-        },
+            }
+        ],
         events: [
-            { type: 'ORDER_CREATED', time: daysAgo(5), location: 'Procurement Portal', user: 'Metro Procurement', notes: 'Urgent cold chain requirement' },
-            { type: 'PICKED_IN_COLD_ZONE', time: daysAgo(4), location: 'Deep Freezer Area', user: 'Operator Rahul', notes: 'Picked at -20°C' },
-            { type: 'TEMP_VERIFIED', time: daysAgo(4), location: 'Dispatch Bay', user: 'QC Officer', notes: 'Shipment Temp: 3.8°C' },
-            { type: 'DELIVERED', time: daysAgo(1), location: 'Hospital Pharmacy', user: 'Hospital Receiver', notes: 'POD signed, temp logger verified' }
+            { type: 'ORDER_CREATED', time: daysAgo(15), location: 'B2B API', user: 'System', notes: 'Auto-order triggered by low inventory' },
+            { type: 'CLOSED', time: daysAgo(5), location: 'ERP Main', user: 'Finance Bot', notes: 'Invoice settled and order reconciled' }
         ]
     },
     {
         id: 'SO-PH-003',
         order_number: 'SO-VAC-2024-003',
-        customer_name: 'National Vaccination Center',
-        order_date: hoursAgo(48),
-        status: 'PROCESSING',
+        customer_name: 'UNICEF Supply Division',
+        order_date: hoursAgo(24),
+        status: 'CREATED',
         priority: 'EMERGENCY',
         total_value: 0.00,
         currency: 'USD',
-        ship_to_destination: 'UNICEF Central Depot, Abuja',
-        ship_to_address: 'Plot 617/618 Central Area, Abuja, Nigeria',
-        tax_code: 'EXEMPT',
-        customer_po: 'UN-VAC-77',
-        delivery_date: daysAgo(-2),
+        ship_to_destination: 'Central Depot, Copenhagen',
+        ship_to_address: 'Oceanvej 10-12, 2150 Nordhavn, Denmark',
+        tax_code: 'DIPLOMATIC',
+        customer_po: 'UN-VAC-COVAX',
+        delivery_date: daysAgo(-7),
         lines: [
-            { id: 'L1', material_code: 'VIAL-VC-10ML', material_name: 'mRNA Vaccine Vial', quantity: 100, uom: 'Vials', unit_price: 0.00, total_price: 0.00, tax_code: 'NONE-GOVT', tax_amount: 0.00, hsn_code: '300220' }
-        ],
-        fulfillment: {
-            type: 'CASE',
-            serial: 'CASE-VAC-UI-001',
-            status: 'PACKED',
-            children: Array.from({ length: 10 }, (_, i) => ({
-                id: `IT-VAC-${i+1}`,
-                serial: `SN-VAC-mRNA-${String(i+1).padStart(3, '0')}`,
-                type: 'UNIT',
-                status: 'PACKED',
+            { 
+                id: 'L3', 
+                material_code: 'VC-mRNA-01', 
+                material_name: 'mRNA COVID-19 Vaccine', 
+                quantity: 10000, 
+                uom: 'Vials', 
+                unit_price: 0.00, 
+                total_price: 0.00, 
+                hsn_code: '300220',
                 events: [
-                    { type: 'BIO_REACTOR_RELEASE', time: daysAgo(30), location: 'Biotech Site', user: 'Lab Director', notes: 'Yield within 98%' },
-                    { type: 'PURIFICATION_DONE', time: daysAgo(25), location: 'Purification Unit', user: 'Scientist K', notes: '99.9% purity' },
-                    { type: 'VIAL_FILL_FINISH', time: daysAgo(20), location: 'Fill-Finish Line', user: 'Aseptic Robot 1', notes: 'Fill vol: 10.1ml' }
-                ]
-            }))
-        },
+                    { type: 'ORDERED', time: hoursAgo(24), location: 'UNICEF Portal', notes: 'Emergency Allocation' }
+                ],
+                shipments: []
+            }
+        ],
         events: [
-            { type: 'ORDER_CREATED', time: hoursAgo(48), location: 'Emergency Portal', user: 'Govt Health Body', notes: 'Direct dispatch requested' },
-            { type: 'ALLOCATION_DONE', time: hoursAgo(24), location: 'Master Inventory', user: 'System', notes: 'Batch VAC-2024 allocated' },
-            { type: 'PACKING_IN_PROGRESS', time: hoursAgo(2), location: 'Bio-Hazard Station', user: 'Protective Crew', notes: 'Packing into Ultra-Low Temp Shipper' }
+            { type: 'ORDER_CREATED', time: hoursAgo(24), location: 'Global Hub', user: 'Admin', notes: 'Pending manufacturing allocation' }
         ]
     }
 ];
+
 

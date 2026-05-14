@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Box,
@@ -544,10 +545,30 @@ export default function TrackTraceDashboard() {
     const [selectedType, setSelectedType] = useState(null);
     const [expanded, setExpanded] = useState({});
     const [breadcrumbs, setBreadcrumbs] = useState([]);
+    
+    const [searchParams] = useSearchParams();
+    const preSelectedId = searchParams.get('id');
     useEffect(() => {
         // Auto-load demo data on mount
         handleLoadDemo();
     }, []);
+
+    // Handle pre-selected ID from URL
+    useEffect(() => {
+        if (data && preSelectedId) {
+            const results = searchBySerial(data.containers, preSelectedId);
+            if (results.length > 0) {
+                setSelected(results[0].data);
+                setSelectedType(results[0].type);
+                setSearchQuery(preSelectedId);
+                
+                // If it's a container, expand it
+                if (results[0].type === 'CONTAINER') {
+                    setExpanded(prev => ({ ...prev, [results[0].data.id]: true }));
+                }
+            }
+        }
+    }, [data, preSelectedId]);
 
     const handleLoadDemo = () => {
         setLoading(true);

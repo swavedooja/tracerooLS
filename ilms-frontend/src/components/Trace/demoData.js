@@ -255,7 +255,75 @@ export const generatePackagingHierarchy = () => {
     const containers = [];
     const mfgDate = daysAgo(7);
 
-    // Container 1 - In Transit
+    // Pharma Shipment 1 - Novartis (Delivered)
+    containers.push({
+        id: 'SH-NOV-99102',
+        serial: 'SH-NOV-99102',
+        sscc: generateSSCC('0395600', 1000101),
+        type: 'SHIPPING_CONTAINER',
+        status: 'DELIVERED',
+        createdAt: daysAgo(7),
+        origin: LOCATIONS.plants[0],
+        destination: { name: 'Zurich Cold Storage, Switzerland' },
+        carrier: 'DHL Medical Express',
+        events: generateEvents('SH-NOV-99102', [
+            { type: 'CREATED', time: daysAgo(7), location: 'Mumbai Plant', user: 'Logistics Lead', notes: 'Pharma shipment created' },
+            { type: 'PICKED_UP', time: daysAgo(7), location: 'Mumbai Dispatch', notes: 'GPS Tracker Activated' },
+            { type: 'IN_TRANSIT', time: daysAgo(5), location: 'Frankfurt Airport', notes: 'Clearing Customs' },
+            { type: 'DELIVERED', time: daysAgo(3), location: 'Zurich Depot', notes: 'POD Signed by Dr. Klaus' }
+        ]),
+        pallets: [
+            {
+                id: 'PLT-PH-001',
+                serial: 'PLT-NOV-8821',
+                sscc: generateSSCC('0395600', 2000101),
+                type: 'PALLET',
+                status: 'DELIVERED',
+                weight: '180 KG',
+                itemCount: 2000,
+                cases: []
+            }
+        ]
+    });
+
+    // Pharma Shipment 2 - Novartis (In Transit)
+    containers.push({
+        id: 'SH-NOV-99103',
+        serial: 'SH-NOV-99103',
+        sscc: generateSSCC('0395600', 1000102),
+        type: 'SHIPPING_CONTAINER',
+        status: 'IN_TRANSIT',
+        createdAt: daysAgo(7),
+        origin: LOCATIONS.plants[0],
+        destination: { name: 'Zurich Cold Storage, Switzerland' },
+        carrier: 'DHL Medical Express',
+        events: generateEvents('SH-NOV-99103', [
+            { type: 'CREATED', time: daysAgo(7), location: 'Mumbai Plant', user: 'Logistics Lead', notes: 'Pharma shipment created' },
+            { type: 'PICKED_UP', time: daysAgo(7), location: 'Mumbai Dispatch', notes: 'GPS Tracker Activated' },
+            { type: 'IN_TRANSIT', time: daysAgo(4), location: 'Dubai Hub', notes: 'Delayed due to flight schedule' }
+        ]),
+        pallets: []
+    });
+
+    // Pharma Shipment 3 - Mayo Clinic (Delivered)
+    containers.push({
+        id: 'SH-MAYO-44122',
+        serial: 'SH-MAYO-44122',
+        sscc: generateSSCC('0395600', 1000103),
+        type: 'SHIPPING_CONTAINER',
+        status: 'DELIVERED',
+        createdAt: daysAgo(15),
+        origin: LOCATIONS.plants[0],
+        destination: { name: 'Rochester Medical Center, MN' },
+        carrier: 'FedEx Clinical Services',
+        events: generateEvents('SH-MAYO-44122', [
+            { type: 'PICKED_UP', time: daysAgo(12), location: 'Mumbai Dispatch', notes: 'Priority-1 Air Freight' },
+            { type: 'DELIVERED', time: daysAgo(6), location: 'Rochester, MN', notes: 'Signature: J. Doe' }
+        ]),
+        pallets: []
+    });
+
+    // Original Container 1 - In Transit
     containers.push({
         id: 'CNT-2024-001',
         serial: generateSerial('CNT', '2024-12-08', 1),
