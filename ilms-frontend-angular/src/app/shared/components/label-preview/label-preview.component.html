@@ -1,0 +1,20 @@
+<div class="label-paper" [style.width.px]="width * scale" [style.height.px]="height * scale">
+  <div *ngFor="let el of elements" [ngStyle]="getElementStyle(el)">
+    
+    <ng-container [ngSwitch]="el.type">
+      <!-- Text -->
+      <div *ngSwitchCase="'text'">
+        {{ substitute(el.content) }}
+      </div>
+
+      <!-- Barcode / QR -->
+      <div *ngSwitchCase="el.type === 'barcode' || el.type === 'qr' ? el.type : ''">
+        <canvas [id]="'bwip-canvas-' + el.id" style="max-width: 100%; max-height: 100%;"></canvas>
+      </div>
+
+      <!-- Image -->
+      <img *ngSwitchCase="'image'" [src]="el.src" style="width: 100%; height: 100%; object-fit: contain;">
+    </ng-container>
+
+  </div>
+</div>

@@ -1,5 +1,5 @@
-/* You can add global styles to this file, and also import other style files */
 @import '@angular/material/prebuilt-themes/azure-blue.css';
+@import 'material-icons/iconfont/material-icons.css';
 
 :root {
   --primary-main: #1976D2;
@@ -64,4 +64,18 @@ h6 { font-weight: 600; font-size: 1.25rem; letter-spacing: 0.01em; line-height: 
 }
 .mui-button:hover {
   transform: translateY(-2px);
+}
+
+/* Ensure MatIcons use the correct font family */
+mat-icon, .material-icons {
+  font-family: 'Material Icons' !important;
+  font-weight: normal;
+  font-style: normal;
+  display: inline-block;
+  line-height: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  word-wrap: normal;
+  white-space: nowrap;
+  direction: ltr;
 }

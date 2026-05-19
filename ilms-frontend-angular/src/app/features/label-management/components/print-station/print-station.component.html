@@ -1,0 +1,159 @@
+<div class="print-station-container no-print">
+  <div class="header">
+    <div class="title-group">
+      <h1>Shipping Label Generator</h1>
+      <p>Fulfill Sales Orders with Automated Packaging & Label Calculations</p>
+    </div>
+    <div class="order-chip" *ngIf="selectedOrder">
+      <mat-icon>shopping_cart</mat-icon>
+      <span>Order: {{selectedOrder.order_number}}</span>
+    </div>
+  </div>
+
+  <mat-stepper #stepper [linear]="true" class="stepper-main">
+    
+    <!-- Step 1: Order Selection -->
+    <mat-step [editable]="false">
+      <ng-template matStepLabel>Order Selection</ng-template>
+      <div class="step-content">
+        <mat-grid-list cols="12" rowHeight="200px" gutterSize="16px">
+          <mat-grid-tile *ngFor="let order of orders" colspan="4">
+            <mat-card class="order-card" (click)="onOrderSelect(order)" [class.selected]="selectedOrder?.id === order.id">
+              <mat-card-header>
+                <div mat-card-avatar class="order-avatar">
+                  <mat-icon>shopping_cart</mat-icon>
+                </div>
+                <mat-card-title>{{order.order_number}}</mat-card-title>
+                <mat-card-subtitle>{{order.customer_name}}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="card-info">
+                  <mat-icon>calendar_today</mat-icon>
+                  <span>{{order.created_at | date}}</span>
+                </div>
+                <mat-chip-set>
+                  <mat-chip>{{order.status}}</mat-chip>
+                </mat-chip-set>
+              </mat-card-content>
+            </mat-card>
+          </mat-grid-tile>
+        </mat-grid-list>
+        
+        <div class="loading-overlay" *ngIf="loading">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 2: Configuration -->
+    <mat-step>
+      <ng-template matStepLabel>Configure Packaging</ng-template>
+      <div class="step-content">
+        <div *ngFor="let line of orderLines" class="config-row">
+          <mat-card class="line-config-card">
+            <div class="line-info">
+              <div class="label">Material</div>
+              <div class="value">{{line.material?.name || line.material_code}}</div>
+              <div class="sub-value">Qty: {{line.quantity}} {{line.uom}}</div>
+              
+              <div class="hierarchy-selector" *ngIf="lineConfigs[line.id]?.needsSelection">
+                <button mat-flat-button color="warn" [matMenuTriggerFor]="hMenu">Choose Hierarchy</button>
+                <mat-menu #hMenu="matMenu">
+                  <button mat-menu-item *ngFor="let h of lineConfigs[line.id].hierarchies" (click)="selectHierarchyForLine(line.id, h)">
+                    {{h.name}}
+                  </button>
+                </mat-menu>
+              </div>
+
+              <div class="assigned-hierarchy" *ngIf="lineConfigs[line.id]?.hierarchy">
+                <mat-icon>storage</mat-icon>
+                <span>{{lineConfigs[line.id].hierarchy.name}}</span>
+              </div>
+            </div>
+
+            <div class="level-configs">
+              <div class="section-title">Label Counts</div>
+              <div class="levels-grid">
+                <div *ngFor="let lvl of lineConfigs[line.id]?.levels" class="level-input-group">
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{lvl.level_name}}</mat-label>
+                    <input matInput type="number" [ngModel]="lineConfigs[line.id].counts[lvl.id]" (ngModelChange)="updateLevelCount(line.id, lvl.id, $event)">
+                    <mat-hint>{{lvl.capacity}} units/pack</mat-hint>
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+          </mat-card>
+        </div>
+
+        <div class="actions-row">
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-flat-button color="primary" matStepperNext [disabled]="loading">Next: Preview</button>
+        </div>
+      </div>
+    </mat-step>
+
+    <!-- Step 3: Print -->
+    <mat-step>
+      <ng-template matStepLabel>Preview & Print</ng-template>
+      <div class="step-content preview-step">
+        <div class="preview-header">
+          <div class="stats">
+            <mat-icon color="primary">check_circle</mat-icon>
+            <span>Ready to generate <strong>{{getTotalLabelCount()}}</strong> labels.</span>
+          </div>
+          <div class="action-buttons">
+            <button mat-stroked-button (click)="generatePDF()">
+              <mat-icon>download</mat-icon> Download PDF
+            </button>
+            <button mat-flat-button color="primary" (click)="printAll()">
+              <mat-icon>print</mat-icon> Print Labels
+            </button>
+          </div>
+        </div>
+
+        <div class="label-sheets-preview">
+          <div *ngFor="let lineId of objectKeys(lineConfigs)" class="sheet-group">
+             <h3>{{lineConfigs[lineId].line.material?.name}}</h3>
+             <div class="sheet-grid">
+               <ng-container *ngFor="let lvl of lineConfigs[lineId].levels">
+                 <div *ngFor="let i of createRange(lineConfigs[lineId].counts[lvl.id])" class="preview-item">
+                    <app-label-preview 
+                      [width]="101" 
+                      [height]="152" 
+                      [elements]="lineConfigs[lineId].line.material_code === 'MAT-AMX' ? amxElements : insElements" 
+                      [data]="{ materialName: lineConfigs[lineId].line.material?.name, materialCode: lineConfigs[lineId].line.material_code, batchNumber: 'B-2024-X', serialNumber: 'SN-' + i }"
+                      [scale]="1.5"
+                    ></app-label-preview>
+                 </div>
+               </ng-container>
+             </div>
+          </div>
+        </div>
+
+        <div class="actions-row">
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-flat-button color="accent" (click)="finish()">Finish & Return</button>
+        </div>
+      </div>
+    </mat-step>
+
+  </mat-stepper>
+</div>
+
+<!-- Special Printing View (only visible when printing) -->
+<div class="print-only">
+  <div *ngFor="let lineId of objectKeys(lineConfigs)" class="print-group">
+    <ng-container *ngFor="let lvl of lineConfigs[lineId].levels">
+      <div *ngFor="let i of createRange(lineConfigs[lineId].counts[lvl.id])" class="print-label-wrapper">
+        <app-label-preview 
+          [width]="101" 
+          [height]="152" 
+          [elements]="lineConfigs[lineId].line.material_code === 'MAT-AMX' ? amxElements : insElements" 
+          [data]="{ materialName: lineConfigs[lineId].line.material?.name, materialCode: lineConfigs[lineId].line.material_code, batchNumber: 'B-2024-X', serialNumber: 'SN-' + i }"
+          [scale]="3.78"
+        ></app-label-preview>
+      </div>
+    </ng-container>
+  </div>
+</div>

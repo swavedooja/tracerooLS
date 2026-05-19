@@ -1,0 +1,182 @@
+<div class="designer-container">
+  <!-- Toolbar -->
+  <mat-card class="toolbar-card">
+    <div class="toolbar-content">
+      <button mat-icon-button (click)="save()" matTooltip="Save Template">
+        <mat-icon>save</mat-icon>
+      </button>
+      <div class="divider"></div>
+      <span class="template-name">{{template.name}}</span>
+      <span class="template-type">{{template.type}}</span>
+      <span class="spacer"></span>
+      <button mat-flat-button color="primary" (click)="save()">Save Template</button>
+    </div>
+  </mat-card>
+
+  <mat-grid-list cols="12" rowHeight="100%" gutterSize="16px" class="main-grid">
+    <!-- Left Sidebar: Assets -->
+    <mat-grid-tile colspan="2">
+      <div class="sidebar-wrapper">
+        <div class="sidebar-header">Elements</div>
+        <mat-nav-list>
+          <mat-list-item (click)="addElement('text')">
+            <mat-icon matListItemIcon>text_fields</mat-icon>
+            <div matListItemTitle>Text Box</div>
+          </mat-list-item>
+          <mat-list-item (click)="addElement('barcode')">
+            <mat-icon matListItemIcon>barcode_reader</mat-icon>
+            <div matListItemTitle>1D Barcode</div>
+          </mat-list-item>
+          <mat-list-item (click)="addElement('qr')">
+            <mat-icon matListItemIcon>qr_code</mat-icon>
+            <div matListItemTitle>QR Code</div>
+          </mat-list-item>
+        </mat-nav-list>
+        
+        <mat-divider></mat-divider>
+        <div class="sidebar-header">Layers</div>
+        <div class="layers-list">
+          <div *ngFor="let el of elements" 
+               class="layer-item" 
+               [class.selected]="selectedId === el.id"
+               (click)="selectedId = el.id">
+            <mat-icon>{{el.type === 'text' ? 'text_fields' : (el.type === 'qr' ? 'qr_code' : 'barcode_reader')}}</mat-icon>
+            <span class="layer-name">{{el.type}} ({{el.id.substr(0,4)}})</span>
+            <button mat-icon-button color="warn" (click)="removeElement(el.id); $event.stopPropagation()">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-grid-tile>
+
+    <!-- Center: Canvas -->
+    <mat-grid-tile colspan="7">
+      <div class="canvas-wrapper">
+        <div class="svg-stage" 
+             [style.width.px]="mmToPx(template.width)" 
+             [style.height.px]="mmToPx(template.height)">
+          <svg [attr.width]="mmToPx(template.width)" 
+               [attr.height]="mmToPx(template.height)"
+               style="background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+            
+            <g *ngFor="let el of elements" 
+               (click)="selectedId = el.id; $event.stopPropagation()"
+               class="svg-element"
+               [class.selected]="selectedId === el.id">
+              
+              <!-- Text Element -->
+              <text *ngIf="el.type === 'text'"
+                    [attr.x]="mmToPx(el.x)" 
+                    [attr.y]="mmToPx(el.y) + mmToPx(el.fontSize || 12)"
+                    [style.font-size.px]="mmToPx(el.fontSize || 12)"
+                    [style.font-weight]="el.fontWeight || 'normal'"
+                    fill="black">
+                {{el.content}}
+              </text>
+
+              <!-- QR/Barcode Placeholders -->
+              <rect *ngIf="el.type === 'qr' || el.type === 'barcode'"
+                    [attr.x]="mmToPx(el.x)" 
+                    [attr.y]="mmToPx(el.y)"
+                    [attr.width]="mmToPx(el.width)"
+                    [attr.height]="mmToPx(el.height)"
+                    fill="#f1f5f9"
+                    stroke="#cbd5e1"></rect>
+              <text *ngIf="el.type === 'qr' || el.type === 'barcode'"
+                    [attr.x]="mmToPx(el.x) + 5" 
+                    [attr.y]="mmToPx(el.y) + 15"
+                    style="font-size: 10px; fill: #64748b;">
+                {{el.type.toUpperCase()}}: {{el.content}}
+              </text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </mat-grid-tile>
+
+    <!-- Right Sidebar: Properties -->
+    <mat-grid-tile colspan="3">
+      <div class="sidebar-wrapper">
+        <div class="sidebar-header">Properties</div>
+        
+        <div class="props-content" *ngIf="selectedElement; else globalProps">
+          <div class="section-title">{{selectedElement.type}} Settings</div>
+          
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Content / Data</mat-label>
+            <textarea matInput [(ngModel)]="selectedElement.content" (ngModelChange)="updateElement('content', $event)"></textarea>
+            <mat-hint>Use {{ '{' }}field{{ '}' }} for dynamic data</mat-hint>
+          </mat-form-field>
+
+          <div class="chip-container">
+            <mat-chip-set>
+              <mat-chip *ngFor="let f of dynamicFields" (click)="insertField(f.value)">
+                {{f.label}}
+              </mat-chip>
+            </mat-chip-set>
+          </div>
+
+          <mat-divider class="my-16"></mat-divider>
+          
+          <div class="row">
+            <mat-form-field appearance="outline">
+              <mat-label>X (mm)</mat-label>
+              <input matInput type="number" [(ngModel)]="selectedElement.x" (ngModelChange)="updateElement('x', $event)">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Y (mm)</mat-label>
+              <input matInput type="number" [(ngModel)]="selectedElement.y" (ngModelChange)="updateElement('y', $event)">
+            </mat-form-field>
+          </div>
+
+          <div class="row">
+            <mat-form-field appearance="outline">
+              <mat-label>Width (mm)</mat-label>
+              <input matInput type="number" [(ngModel)]="selectedElement.width" (ngModelChange)="updateElement('width', $event)">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Height (mm)</mat-label>
+              <input matInput type="number" [(ngModel)]="selectedElement.height" (ngModelChange)="updateElement('height', $event)">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width" *ngIf="selectedElement.type === 'text'">
+            <mat-label>Font Size</mat-label>
+            <input matInput type="number" [(ngModel)]="selectedElement.fontSize" (ngModelChange)="updateElement('fontSize', $event)">
+          </mat-form-field>
+        </div>
+
+        <ng-template #globalProps>
+          <div class="props-content">
+            <div class="section-title">Template Settings</div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Template Name</mat-label>
+              <input matInput [(ngModel)]="template.name">
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Apply To</mat-label>
+              <mat-select [(ngModel)]="template.type">
+                <mat-option value="ITEM">ITEM</mat-option>
+                <mat-option value="BOX">BOX</mat-option>
+                <mat-option value="PALLET">PALLET</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div class="row">
+              <mat-form-field appearance="outline">
+                <mat-label>Canvas Width (mm)</mat-label>
+                <input matInput type="number" [(ngModel)]="template.width">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Canvas Height (mm)</mat-label>
+                <input matInput type="number" [(ngModel)]="template.height">
+              </mat-form-field>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+    </mat-grid-tile>
+  </mat-grid-list>
+</div>

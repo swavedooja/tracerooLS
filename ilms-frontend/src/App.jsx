@@ -33,6 +33,7 @@ import LabelDashboard from './components/LabelManagement/LabelDashboard'; // Res
 import TradeItemLabelManagement from './components/LabelManagement/TradeItemLabelManagement'; // Added import
 import ShippingLabelManagement from './components/LabelManagement/ShippingLabelManagement'; // Added import
 import MaterialInventory from './components/LabelManagement/MaterialInventory'; // Add import
+import PackagingInventory from './components/LabelManagement/PackagingInventory'; // Add import
 import PackingDashboard from './components/Packing/PackingDashboard';
 import AggregationStation from './components/Packing/AggregationStation';
 import PrintStation from './components/LabelManagement/Print/PrintStation';
@@ -47,6 +48,7 @@ import InventoryScanConfirm from './components/Inventory/InventoryScanConfirm';
 import PackingStation from './components/Inventory/PackingStation';
 import TrackTraceDashboard from './components/Trace/TrackTraceDashboard';
 import ChainTrackDashboard from './components/Trace/ChainTrackDashboard';
+import LifeJourneyDashboard from './components/Trace/LifeJourneyDashboard';
 import Dashboard from './components/Dashboard.jsx';
 import DashboardMetrics from './components/Dashboard/DashboardMetrics.jsx';
 import OrderLifecycleDashboard from './components/Dashboard/OrderLifecycleDashboard.jsx';
@@ -96,8 +98,7 @@ function NavBar({ onLogout }) {
         { label: 'Operations', icon: Timeline, path: '/' },
         { label: 'Order Lifecycle', icon: HistoryIcon, path: '/dashboard/order-lifecycle' },
         { label: 'Track & Trace', icon: Timeline, path: '/trace' },
-        // { label: 'Home', icon: DashboardIcon, path: '/dashboard/home' },
-        // { label: 'ChainTrack', icon: Timeline, path: '/chaintrack' },
+        { label: 'Supply Chain Life Journey', icon: Timeline, path: '/trace/life-journey' },
       ]
     },
     {
@@ -117,6 +118,7 @@ function NavBar({ onLogout }) {
       children: [
         { label: 'Generate Shipping Labels', icon: Print, path: '/labels/generate' },
         { label: 'Material Inventory', icon: Storage, path: '/label-management/material-inventory' },
+        { label: 'Packaging Inventory', icon: Storage, path: '/label-management/packaging-inventory' },
       ]
     },
     {
@@ -323,6 +325,7 @@ export default function App() {
           <Route path="/labels/shipping" element={<ShippingLabelManagement />} />
           <Route path="/label-management/material-inventory" element={<MaterialInventory />} />
           <Route path="/label-management/material-inventory/:hierarchyId" element={<MaterialInventory />} />
+          <Route path="/label-management/packaging-inventory" element={<PackagingInventory />} />
           <Route path="/label-templates" element={<LabelDashboard />} />
           <Route path="/label-templates/*" element={<LabelDashboard />} />
           <Route path="/labels/generate" element={<PrintStation />} />
@@ -338,6 +341,7 @@ export default function App() {
           <Route path="/medical-claims" element={<ClaimsDashboard />} />
           <Route path="/medical-claims/:id" element={<ClaimDetail />} />
           <Route path="/trace" element={<TrackTraceDashboard />} />
+          <Route path="/trace/life-journey" element={<LifeJourneyDashboard />} />
           <Route path="/chaintrack" element={<ChainTrackDashboard />} />
           <Route path="/mobile-wireframe" element={<MobileApp />} />
         </Routes>

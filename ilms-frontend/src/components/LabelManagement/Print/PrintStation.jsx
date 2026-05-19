@@ -35,6 +35,7 @@ export default function ShippingLabelGenerator() {
     const [selectedLine, setSelectedLine] = useState(null);
     const [hierarchyDialog, setHierarchyDialog] = useState({ open: false, line: null, options: [] });
     const [detailDialog, setDetailDialog] = useState({ open: false, data: null, type: 'ORDER' });
+    const [activeLevelTab, setActiveLevelTab] = useState(0);
 
     useEffect(() => {
         loadPendingOrders();
@@ -516,27 +517,56 @@ export default function ShippingLabelGenerator() {
                                         {selectedLine && (() => {
                                             const config = lineConfigs[selectedLine.id];
                                             if (!config) return null;
+                                            const levelsList = config.levels || [];
+                                            const activeLevel = levelsList[activeLevelTab] || levelsList[0];
                                             return (
                                                 <Box key={selectedLine.id} sx={{ mb: 4, '@media print': { mb: 0 } }}>
-                                                    <Typography variant="overline" color="primary" className="no-print">{config.hierarchy?.name}</Typography>
-                                                    {config.levels?.map(lvl => {
+                                                    <Typography variant="overline" color="primary" className="no-print" sx={{ display: 'block', mb: 1, fontWeight: 'bold' }}>
+                                                        {config.hierarchy?.name}
+                                                    </Typography>
+                                                    
+                                                    {/* Levels Tabs */}
+                                                    <Tabs 
+                                                        value={activeLevelTab >= levelsList.length ? 0 : activeLevelTab} 
+                                                        onChange={(e, val) => setActiveLevelTab(val)}
+                                                        variant="scrollable"
+                                                        scrollButtons="auto"
+                                                        className="no-print"
+                                                        sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}
+                                                    >
+                                                        {levelsList.map((lvl, index) => (
+                                                            <Tab 
+                                                                key={lvl.id}
+                                                                label={`${lvl.level_name} (${config.counts[lvl.id] || 0})`}
+                                                                sx={{ fontWeight: 'bold', textTransform: 'none' }}
+                                                            />
+                                                        ))}
+                                                    </Tabs>
+
+                                                    {/* Screen rendering: only show labels of active level, or all during print */}
+                                                    {levelsList.map((lvl, idx) => {
+                                                        const isCurrent = activeLevel?.id === lvl.id;
                                                         const count = config.counts[lvl.id] || 0;
                                                         const labels = [];
+                                                        
                                                         for (let i = 0; i < count; i++) {
                                                             labels.push(
-                                                                <Box key={`${lvl.id}-${i}`} sx={{ 
-                                                                    mb: 2, 
-                                                                    transform: 'scale(0.8)', 
-                                                                    transformOrigin: 'top left',
-                                                                    '@media print': {
-                                                                        transform: 'none',
-                                                                        pageBreakAfter: 'always',
-                                                                        mb: 0,
-                                                                        display: 'flex',
-                                                                        justifyContent: 'center',
-                                                                        pt: 5
-                                                                    }
-                                                                }}>
+                                                                <Box 
+                                                                    key={`${lvl.id}-${i}`} 
+                                                                    sx={{ 
+                                                                        mb: 2, 
+                                                                        transform: 'scale(0.8)', 
+                                                                        transformOrigin: 'top left',
+                                                                        display: isCurrent ? 'block' : 'none',
+                                                                        '@media print': {
+                                                                            display: 'block',
+                                                                            transform: 'none',
+                                                                            pageBreakAfter: 'always',
+                                                                            mb: 0,
+                                                                            pt: 5
+                                                                        }
+                                                                    }}
+                                                                >
                                                                     <Box className="no-print" sx={{ mb: 1 }}>
                                                                         <Typography variant="caption" fontWeight="bold">{lvl.level_name} ({i+1}/{count})</Typography>
                                                                     </Box>
@@ -581,7 +611,8 @@ export default function ShippingLabelGenerator() {
                                                     })}
                                                 </Box>
                                             );
-                                        })()}
+                                        })()}`}
+
                                     </Box>
                                 </Paper>
                             </Grid>

@@ -1,0 +1,158 @@
+.print-station-container {
+  padding: 32px;
+  background: #f1f5f9;
+  min-height: calc(100vh - 64px);
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+    
+    .title-group {
+      h1 { font-size: 2.5rem; font-weight: 800; color: #1e293b; margin: 0; letter-spacing: -0.02em; }
+      p { color: #64748b; font-size: 1.1rem; margin: 4px 0 0; }
+    }
+    
+    .order-chip {
+      background: #4f46e5;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    }
+  }
+}
+
+.stepper-main {
+  background: transparent;
+  
+  ::ng-deep .mat-step-header {
+    background: white;
+    margin-bottom: 16px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    
+    &.mat-step-header-active { background: #eff6ff; border-color: #3b82f6; }
+  }
+}
+
+.step-content {
+  padding: 8px 0;
+  min-height: 400px;
+  position: relative;
+}
+
+.order-card {
+  height: 100%;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  
+  &:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1); }
+  &.selected { border: 3px solid #3b82f6; background: #eff6ff; }
+  
+  .order-avatar { background: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; }
+  
+  .card-info { display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 0.9rem; margin: 16px 0; }
+}
+
+.config-row { margin-bottom: 20px; }
+
+.line-config-card {
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 24px;
+  display: flex;
+  gap: 32px;
+  
+  .line-info {
+    flex: 1;
+    .label { font-size: 0.75rem; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: 0.05em; }
+    .value { font-size: 1.5rem; font-weight: 800; color: #1e293b; margin: 4px 0; }
+    .sub-value { color: #64748b; font-weight: 500; }
+    
+    .assigned-hierarchy {
+      margin-top: 16px;
+      padding: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #334155;
+    }
+  }
+  
+  .level-configs {
+    flex: 2;
+    .section-title { font-weight: 700; color: #64748b; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 16px; }
+    .levels-grid { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 8px; }
+    .level-input-group { min-width: 140px; }
+  }
+}
+
+.preview-step {
+  .preview-header {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .stats { display: flex; align-items: center; gap: 12px; font-size: 1.1rem; }
+    .action-buttons { display: flex; gap: 12px; }
+  }
+}
+
+.label-sheets-preview {
+  margin-bottom: 32px;
+  .sheet-group {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 24px;
+    
+    h3 { margin: 0 0 20px; font-weight: 800; color: #334155; }
+    .sheet-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+    .preview-item { transform: scale(1); transform-origin: top left; }
+  }
+}
+
+.actions-row { display: flex; justify-content: flex-end; gap: 12px; margin-top: 32px; }
+
+.loading-overlay { position: absolute; top: 0; left: 0; right: 0; z-index: 10; }
+
+// Printing specific styles
+.print-only { display: none; }
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { 
+    display: block !important; 
+    background: white;
+  }
+  .print-group { page-break-after: always; }
+  .print-label-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}
+
+.full-width { width: 100%; }
