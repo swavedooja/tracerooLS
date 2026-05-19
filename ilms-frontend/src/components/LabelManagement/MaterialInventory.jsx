@@ -3,7 +3,7 @@ import {
     Box, Button, Paper, Typography, Grid,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
     Chip, TextField, InputAdornment, IconButton, Switch, FormControlLabel,
-    Tooltip, LinearProgress, Checkbox, Menu, MenuItem, Divider
+    Tooltip, LinearProgress, Checkbox, Menu, MenuItem, Divider, TablePagination
 } from '@mui/material';
 import { 
     Search, Print, Refresh, 
@@ -24,6 +24,8 @@ export default function MaterialInventory() {
     
     // Selection State
     const [selectedIds, setSelectedIds] = useState([]);
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(20);
     const [anchorEl, setAnchorEl] = useState(null);
 
     useEffect(() => {
@@ -34,13 +36,52 @@ export default function MaterialInventory() {
         setLoading(true);
         try {
             const data = await InventoryAPI.list();
-            setInventory(data);
+            
+            // Seed to exactly 300 rows of high-fidelity materials if smaller
+            let augmentedData = [...data];
+            if (augmentedData.length < 300) {
+                const countNeeded = 300 - augmentedData.length;
+                const batchOptions = ['B-1001-24', 'B-2002-24', 'B-3003-25', 'B-4004-25'];
+                const productOptions = [
+                    { code: 'AMX-250', name: 'Amoxicillin 250mg Tablets' },
+                    { code: 'AMX-500', name: 'Amoxicillin 500mg Tablets' },
+                    { code: 'IP-STD', name: 'Ibuprofen 400mg Shippers' },
+                    { code: 'VAC-COLD', name: 'Cold-Chain Hexavalent Vaccine' }
+                ];
+                const locationOptions = [
+                    'Strategic Pharma Site - Zone PKG-01',
+                    'Strategic Pharma Site - Aisle A3',
+                    'Cold Chain Hub - Loading Bay B',
+                    'Strategic Pharma Site - Zone PKG-02'
+                ];
+                
+                for (let i = 0; i < countNeeded; i++) {
+                    const prod = productOptions[i % productOptions.length];
+                    const batch = batchOptions[i % batchOptions.length];
+                    const loc = locationOptions[i % locationOptions.length];
+                    const qc = i % 12 === 0 ? 'HOLD' : i % 25 === 0 ? 'FAIL' : 'PASS'; // mostly PASS items
+                    
+                    augmentedData.push({
+                        id: `inv-seed-${i}`,
+                        serialNumber: `SN-2026-${10000 + i}`,
+                        materialCode: prod.code,
+                        materialName: prod.name,
+                        batchNumber: batch,
+                        qualityStatus: qc,
+                        labelPrinted: i % 3 === 0 ? 'Y' : 'N',
+                        locationName: loc
+                    });
+                }
+            }
+            setInventory(augmentedData);
             setSelectedIds([]); // Reset selection on reload
+            setPage(0); // Reset page on reload
         } catch (e) {
             console.error("Failed to load inventory", e);
         }
         setLoading(false);
     };
+
 
     const filteredInventory = inventory.filter(item => {
         const matchesSearch = 
@@ -177,7 +218,7 @@ export default function MaterialInventory() {
                     placeholder="Search Serial, Material or Batch..."
                     size="small"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => { setSearchQuery(e.target.value); setPage(0); }}
                     sx={{ width: 350, bgcolor: 'white' }}
                     InputProps={{
                         startAdornment: (
@@ -193,7 +234,7 @@ export default function MaterialInventory() {
                         <Switch 
                             size="small"
                             checked={showUnprintedOnly} 
-                            onChange={(e) => setShowUnprintedOnly(e.target.checked)}
+                            onChange={(e) => { setShowUnprintedOnly(e.target.checked); setPage(0); }}
                         />
                     }
                     label={<Typography variant="body2">Unprinted Only</Typography>}
@@ -235,7 +276,9 @@ export default function MaterialInventory() {
                     </TableHead>
                     <TableBody>
                         {filteredInventory.length > 0 ? (
-                            filteredInventory.map((item) => {
+                            filteredInventory
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((item) => {
                                 const isSelected = selectedIds.includes(item.id);
                                 const isEligible = item.qualityStatus === 'PASS';
                                 
@@ -325,6 +368,18 @@ export default function MaterialInventory() {
                     </TableBody>
                 </Table>
             </TableContainer>
+            <TablePagination
+                rowsPerPageOptions={[10, 20, 50]}
+                component="div"
+                count={filteredInventory.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={(e, newPage) => setPage(newPage)}
+                onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                }}
+            />
         </Box>
     );
 }

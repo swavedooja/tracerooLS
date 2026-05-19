@@ -59,6 +59,18 @@ export default function TradeItemPrint() {
         { id: 'dl-3', level_order: 3, level_name: 'Master Carton', contained_quantity: 50, capacity: 5 }
     ];
 
+    const AMOXICILLIN_GLOBAL_HIERARCHY = {
+        id: 'amox-global-export-h',
+        name: 'Amoxicillin Tablets Global Export',
+        description: 'Tablet Strip (1) -> Secondary Folding Box (10) -> Master Export Carton (50)'
+    };
+
+    const AMOXICILLIN_GLOBAL_LEVELS = [
+        { id: 'agel-1', level_order: 1, level_name: 'Tablet Strip', contained_quantity: 1, capacity: 1 },
+        { id: 'agel-2', level_order: 2, level_name: 'Secondary Folding Box', contained_quantity: 10, capacity: 10 },
+        { id: 'agel-3', level_order: 3, level_name: 'Master Export Carton', contained_quantity: 50, capacity: 5 }
+    ];
+
     useEffect(() => {
         if (items.length > 0) {
             loadPackagingConfig();
@@ -90,30 +102,43 @@ export default function TradeItemPrint() {
                 matchedHierarchies = [DUMMY_HIERARCHY];
             }
 
+            // Prepend Amoxicillin Tablets Global Export as the leading choice
+            matchedHierarchies = [
+                AMOXICILLIN_GLOBAL_HIERARCHY,
+                ...matchedHierarchies.filter(h => h.name !== 'Amoxicillin Tablets Global Export' && h.id !== 'amox-global-export-h')
+            ];
+
             setHierarchies(matchedHierarchies);
             
-            // Default to the first hierarchy
+            // Default to the first hierarchy (which is now Amoxicillin Tablets Global Export)
             const defaultH = matchedHierarchies[0];
             setSelectedHierarchy(defaultH);
             await loadHierarchyLevels(defaultH);
 
         } catch (e) {
             console.error("Failed to load hierarchy config", e);
-            // Graceful fallback to dummy
-            setHierarchies([DUMMY_HIERARCHY]);
-            setSelectedHierarchy(DUMMY_HIERARCHY);
-            setLevels(DUMMY_LEVELS);
-            performNestingCalculations(items.length, DUMMY_LEVELS);
+            // Graceful fallback to default
+            setHierarchies([AMOXICILLIN_GLOBAL_HIERARCHY]);
+            setSelectedHierarchy(AMOXICILLIN_GLOBAL_HIERARCHY);
+            setLevels(AMOXICILLIN_GLOBAL_LEVELS);
+            performNestingCalculations(items.length, AMOXICILLIN_GLOBAL_LEVELS);
         }
         setLoading(false);
     };
 
     const loadHierarchyLevels = async (hierarchy) => {
+        if (hierarchy.id === 'amox-global-export-h') {
+            setLevels(AMOXICILLIN_GLOBAL_LEVELS);
+            performNestingCalculations(items.length, AMOXICILLIN_GLOBAL_LEVELS);
+            return;
+        }
+
         if (hierarchy.id === 'dummy-h-1') {
             setLevels(DUMMY_LEVELS);
             performNestingCalculations(items.length, DUMMY_LEVELS);
             return;
         }
+
 
         try {
             const data = await PackagingAPI.getLevels(hierarchy.id);
