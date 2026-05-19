@@ -35,12 +35,10 @@ export default function MaterialInventory() {
     const loadInventory = async () => {
         setLoading(true);
         try {
-            // Seed exactly 100 rows of Amoxicillin Tablets and 50 other rows
+            const data = await InventoryAPI.list();
+            
+            // Seed exactly 100 rows of Amoxicillin 250mg Tablets and 50 other rows
             let augmentedData = [];
-            const amoxProducts = [
-                { code: 'AMX-250', name: 'Amoxicillin 250mg Tablets' },
-                { code: 'AMX-500', name: 'Amoxicillin 500mg Tablets' }
-            ];
             const batchOptions = ['B-1001-24', 'B-2002-24', 'B-3003-25', 'B-4004-25'];
             const locationOptions = [
                 'Strategic Pharma Site - Zone PKG-01',
@@ -50,19 +48,15 @@ export default function MaterialInventory() {
             ];
             
             for (let i = 0; i < 100; i++) {
-                const prod = amoxProducts[i % amoxProducts.length];
-                const batch = batchOptions[i % batchOptions.length];
-                const loc = locationOptions[i % locationOptions.length];
-                
                 augmentedData.push({
                     id: `inv-seed-amox-${i}`,
                     serialNumber: `SN-AMX-${10000 + i}`,
-                    materialCode: prod.code,
-                    materialName: prod.name,
-                    batchNumber: batch,
+                    materialCode: 'AMX-250',
+                    materialName: 'Amoxicillin 250mg Tablets',
+                    batchNumber: batchOptions[i % batchOptions.length],
                     qualityStatus: 'PASS',
                     labelPrinted: i % 5 === 0 ? 'Y' : 'N',
-                    locationName: loc
+                    locationName: locationOptions[i % locationOptions.length]
                 });
             }
             
@@ -95,6 +89,7 @@ export default function MaterialInventory() {
         }
         setLoading(false);
     };
+
 
 
     const filteredInventory = inventory.filter(item => {
