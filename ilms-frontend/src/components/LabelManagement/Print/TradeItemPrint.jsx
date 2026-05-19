@@ -22,9 +22,9 @@ export default function TradeItemPrint() {
     const printRef = useRef();
     
     const rawItems = location.state?.preSelectedItems || [];
-    const items = rawItems.length >= 300 ? rawItems : [
+    const items = rawItems.length >= 100 ? rawItems.slice(0, 100) : [
         ...rawItems,
-        ...Array.from({ length: Math.max(0, 300 - rawItems.length) }, (_, i) => ({
+        ...Array.from({ length: Math.max(0, 100 - rawItems.length) }, (_, i) => ({
             id: `seed-${i}`,
             serialNumber: `SN-PROD-${1000 + i}`,
             materialCode: rawItems[0]?.materialCode || rawItems[0]?.material_code || 'AMX-250',

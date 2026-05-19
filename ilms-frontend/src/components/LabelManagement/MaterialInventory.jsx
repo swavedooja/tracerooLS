@@ -35,44 +35,58 @@ export default function MaterialInventory() {
     const loadInventory = async () => {
         setLoading(true);
         try {
-            const data = await InventoryAPI.list();
+            // Seed exactly 100 rows of Amoxicillin Tablets and 50 other rows
+            let augmentedData = [];
+            const amoxProducts = [
+                { code: 'AMX-250', name: 'Amoxicillin 250mg Tablets' },
+                { code: 'AMX-500', name: 'Amoxicillin 500mg Tablets' }
+            ];
+            const batchOptions = ['B-1001-24', 'B-2002-24', 'B-3003-25', 'B-4004-25'];
+            const locationOptions = [
+                'Strategic Pharma Site - Zone PKG-01',
+                'Strategic Pharma Site - Aisle A3',
+                'Cold Chain Hub - Loading Bay B',
+                'Strategic Pharma Site - Zone PKG-02'
+            ];
             
-            // Seed to exactly 300 rows of high-fidelity materials if smaller
-            let augmentedData = [...data];
-            if (augmentedData.length < 300) {
-                const countNeeded = 300 - augmentedData.length;
-                const batchOptions = ['B-1001-24', 'B-2002-24', 'B-3003-25', 'B-4004-25'];
-                const productOptions = [
-                    { code: 'AMX-250', name: 'Amoxicillin 250mg Tablets' },
-                    { code: 'AMX-500', name: 'Amoxicillin 500mg Tablets' },
-                    { code: 'IP-STD', name: 'Ibuprofen 400mg Shippers' },
-                    { code: 'VAC-COLD', name: 'Cold-Chain Hexavalent Vaccine' }
-                ];
-                const locationOptions = [
-                    'Strategic Pharma Site - Zone PKG-01',
-                    'Strategic Pharma Site - Aisle A3',
-                    'Cold Chain Hub - Loading Bay B',
-                    'Strategic Pharma Site - Zone PKG-02'
-                ];
+            for (let i = 0; i < 100; i++) {
+                const prod = amoxProducts[i % amoxProducts.length];
+                const batch = batchOptions[i % batchOptions.length];
+                const loc = locationOptions[i % locationOptions.length];
                 
-                for (let i = 0; i < countNeeded; i++) {
-                    const prod = productOptions[i % productOptions.length];
-                    const batch = batchOptions[i % batchOptions.length];
-                    const loc = locationOptions[i % locationOptions.length];
-                    const qc = i % 12 === 0 ? 'HOLD' : i % 25 === 0 ? 'FAIL' : 'PASS'; // mostly PASS items
-                    
-                    augmentedData.push({
-                        id: `inv-seed-${i}`,
-                        serialNumber: `SN-2026-${10000 + i}`,
-                        materialCode: prod.code,
-                        materialName: prod.name,
-                        batchNumber: batch,
-                        qualityStatus: qc,
-                        labelPrinted: i % 3 === 0 ? 'Y' : 'N',
-                        locationName: loc
-                    });
-                }
+                augmentedData.push({
+                    id: `inv-seed-amox-${i}`,
+                    serialNumber: `SN-AMX-${10000 + i}`,
+                    materialCode: prod.code,
+                    materialName: prod.name,
+                    batchNumber: batch,
+                    qualityStatus: 'PASS',
+                    labelPrinted: i % 5 === 0 ? 'Y' : 'N',
+                    locationName: loc
+                });
             }
+            
+            const otherProducts = [
+                { code: 'IP-STD', name: 'Ibuprofen 400mg Shippers' },
+                { code: 'VAC-COLD', name: 'Cold-Chain Hexavalent Vaccine' }
+            ];
+            for (let i = 0; i < 50; i++) {
+                const prod = otherProducts[i % otherProducts.length];
+                const batch = batchOptions[i % batchOptions.length];
+                const loc = locationOptions[i % locationOptions.length];
+                
+                augmentedData.push({
+                    id: `inv-seed-other-${i}`,
+                    serialNumber: `SN-OTHER-${20000 + i}`,
+                    materialCode: prod.code,
+                    materialName: prod.name,
+                    batchNumber: batch,
+                    qualityStatus: 'PASS',
+                    labelPrinted: 'N',
+                    locationName: loc
+                });
+            }
+            
             setInventory(augmentedData);
             setSelectedIds([]); // Reset selection on reload
             setPage(0); // Reset page on reload
