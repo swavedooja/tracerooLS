@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { 
     Box, Button, Typography, Paper, Grid, Stack, 
@@ -21,19 +21,21 @@ export default function TradeItemPrint() {
     const navigate = useNavigate();
     const printRef = useRef();
     
-    const rawItems = location.state?.preSelectedItems || [];
-    const items = rawItems.length >= 100 ? rawItems.slice(0, 100) : [
-        ...rawItems,
-        ...Array.from({ length: Math.max(0, 100 - rawItems.length) }, (_, i) => ({
-            id: `seed-${i}`,
-            serialNumber: `SN-PROD-${1000 + i}`,
-            materialCode: rawItems[0]?.materialCode || rawItems[0]?.material_code || 'AMX-250',
-            materialName: rawItems[0]?.materialName || rawItems[0]?.material_name || 'Amoxicillin 250mg Tablets',
-            batchNumber: rawItems[0]?.batchNumber || 'B-1001-24',
-            mfgDate: rawItems[0]?.mfgDate || '2026-05-04',
-            expiryDate: rawItems[0]?.expiryDate || '2028-05-04'
-        }))
-    ];
+    const items = useMemo(() => {
+        const rawItems = location.state?.preSelectedItems || [];
+        return rawItems.length >= 100 ? rawItems.slice(0, 100) : [
+            ...rawItems,
+            ...Array.from({ length: Math.max(0, 100 - rawItems.length) }, (_, i) => ({
+                id: `seed-${i}`,
+                serialNumber: `SN-PROD-${1000 + i}`,
+                materialCode: rawItems[0]?.materialCode || rawItems[0]?.material_code || 'AMX-250',
+                materialName: rawItems[0]?.materialName || rawItems[0]?.material_name || 'Amoxicillin 250mg Tablets',
+                batchNumber: rawItems[0]?.batchNumber || 'B-1001-24',
+                mfgDate: rawItems[0]?.mfgDate || '2026-05-04',
+                expiryDate: rawItems[0]?.expiryDate || '2028-05-04'
+            }))
+        ];
+    }, [location.state?.preSelectedItems]);
 
     // State for packaging hierarchy & calculations
     const [loading, setLoading] = useState(false);
